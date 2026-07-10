@@ -1,0 +1,3245 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>רשימת משימות שבועי</title>
+
+<!-- Make this feel like an installed app when added to the home screen -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c1810">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="רשימת משימות שבועי">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700;900&family=Heebo:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #f5f0e8;
+    --bg2: #ede6d6;
+    --surface: #fff8ef;
+    --surface2: #fdf5e8;
+    --border: #c8b89a;
+    --border-light: #e0d4be;
+    --text: #2c1810;
+    --text2: #6b4f3a;
+    --text3: #a0856e;
+    --accent: #8b4513;
+    --accent2: #c0703a;
+    --gold: #c9a84c;
+    --gold-light: #f0d98a;
+    --check: #4a7c59;
+    --check-bg: #e8f5ec;
+    --partial: #c99a2e;
+    --partial-bg: #fbf1d8;
+    --failed: #b8453a;
+    --failed-bg: #fae3e0;
+    --shadow: rgba(44,24,16,0.12);
+    --header-bg: #2c1810;
+    --header-text: #f5e6c8;
+    --header-sub: #c9a84c;
+    --day-header: #f0e6d0;
+    --day-today: #fff3e0;
+    --day-today-border: #c9a84c;
+    --modal-bg: #fff8ef;
+    --scrollbar: #c8b89a;
+  }
+
+  [data-theme="dark"] {
+    --bg: #1a1208;
+    --bg2: #221a0e;
+    --surface: #2a1f12;
+    --surface2: #322615;
+    --border: #5a4030;
+    --border-light: #3d2d1e;
+    --text: #f0e0c0;
+    --text2: #c9a878;
+    --text3: #8a7060;
+    --accent: #d4804a;
+    --accent2: #e09060;
+    --gold: #c9a84c;
+    --gold-light: #8a6820;
+    --check: #5a9a6a;
+    --check-bg: #1a2e20;
+    --partial: #d4a83a;
+    --partial-bg: #332b10;
+    --failed: #c75a4c;
+    --failed-bg: #331612;
+    --shadow: rgba(0,0,0,0.4);
+    --header-bg: #0d0904;
+    --header-text: #f0e0c0;
+    --header-sub: #c9a84c;
+    --day-header: #2a1f12;
+    --day-today: #2a2010;
+    --day-today-border: #c9a84c;
+    --modal-bg: #2a1f12;
+    --scrollbar: #5a4030;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+    overflow-x: hidden;
+  }
+
+
+  /* ───── INSTALL INSTRUCTIONS MODAL ───── */
+  #install-modal .modal {
+    margin-top: 8vh;
+    border-radius: 20px;
+    transform: translateY(-40px) scale(0.96);
+    opacity: 0;
+    transition: transform 0.25s, opacity 0.25s;
+    max-width: 420px;
+  }
+  #install-modal.open .modal { transform: translateY(0) scale(1); opacity: 1; }
+  .install-step {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .install-step:last-child { border-bottom: none; }
+  .install-step-num {
+    background: var(--gold);
+    color: #2c1810;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ───── HEADER ───── */
+  .header {
+    background: var(--header-bg);
+    color: var(--header-text);
+    padding: clamp(10px, 3vw, 18px) clamp(10px, 4vw, 20px) clamp(8px, 2vw, 14px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 3px 16px var(--shadow);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    gap: 8px;
+  }
+
+  .parasha-title {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: clamp(1.05rem, 4.5vw, 1.7rem);
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: -0.5px;
+    line-height: 1;
+    min-width: 0;
+    flex-shrink: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .parasha-title span {
+    display: block;
+    font-size: clamp(0.6rem, 2vw, 0.75rem);
+    font-weight: 400;
+    color: var(--header-text);
+    opacity: 0.7;
+    font-family: 'Heebo', sans-serif;
+    letter-spacing: 0;
+    margin-bottom: 2px;
+    white-space: nowrap;
+  }
+
+  .header-controls {
+    display: flex;
+    gap: clamp(4px, 1.5vw, 8px);
+    align-items: center;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+  }
+
+  .btn-icon {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--header-text);
+    border-radius: 10px;
+    width: clamp(28px, 8vw, 36px);
+    height: clamp(28px, 8vw, 36px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-icon:hover { background: rgba(255,255,255,0.2); }
+
+  .btn-install {
+    background: var(--gold);
+    border: 1px solid var(--gold);
+    color: #2c1810;
+    border-radius: 10px;
+    height: clamp(28px, 8vw, 36px);
+    padding: 0 clamp(6px, 2vw, 12px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    font-size: clamp(0.65rem, 2vw, 0.78rem);
+    font-weight: 700;
+    white-space: nowrap;
+    gap: 4px;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-install:hover { opacity: 0.85; }
+  .btn-install.visible { display: flex; }
+
+  .hebrew-date {
+    font-size: clamp(0.65rem, 2vw, 0.8rem);
+    color: var(--header-sub);
+    font-family: 'Heebo', sans-serif;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .week-nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 2vw, 10px);
+    margin-top: 6px;
+  }
+
+  .week-nav-btn {
+    background: rgba(201,168,76,0.2);
+    border: 1px solid rgba(201,168,76,0.4);
+    color: var(--gold);
+    border-radius: 8px;
+    padding: clamp(3px, 1vw, 4px) clamp(6px, 2vw, 10px);
+    font-size: clamp(0.65rem, 2vw, 0.8rem);
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    transition: background 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .week-nav-btn:hover { background: rgba(201,168,76,0.35); }
+
+  .week-indicator {
+    font-size: clamp(0.6rem, 1.8vw, 0.75rem);
+    color: rgba(240,224,192,0.6);
+    flex: 1;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ───── TABS ───── */
+  .tabs {
+    display: flex;
+    background: var(--bg2);
+    border-bottom: 2px solid var(--border);
+    padding: 0 clamp(6px, 2vw, 12px);
+    gap: 4px;
+  }
+  .tab {
+    padding: clamp(7px, 2vw, 10px) clamp(10px, 3vw, 16px);
+    font-size: clamp(0.75rem, 2.2vw, 0.85rem);
+    font-weight: 600;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ───── PROGRESS ───── */
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 16px 4px;
+    font-size: 0.72rem;
+    color: var(--text3);
+    font-weight: 500;
+  }
+
+  .progress-bar-wrap {
+    height: 3px;
+    background: var(--border-light);
+    margin: 0 12px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(to left, var(--gold), var(--check));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* ───── MAIN GRID ───── */
+  .grid-container {
+    display: flex;
+    overflow: hidden;
+  }
+
+  .task-col {
+    min-width: 110px;
+    max-width: 130px;
+    background: var(--surface);
+    border-left: 2px solid var(--border);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .task-col-header {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--day-header);
+    border-bottom: 2px solid var(--border);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text2);
+  }
+
+  .task-name-cell {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 4px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    gap: 5px;
+    position: relative;
+    overflow: hidden;
+  }
+  .task-name-cell:hover { background: var(--bg2); }
+
+  .task-name-cell.dragging { opacity: 0.4; }
+  .task-name-cell.drag-over { box-shadow: inset 0 2px 0 var(--accent); }
+
+  .drag-handle {
+    flex-shrink: 0;
+    width: 16px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    color: var(--text3);
+    font-size: 0.85rem;
+    line-height: 1;
+    letter-spacing: -1px;
+    touch-action: none;
+    user-select: none;
+  }
+  .drag-handle:active { cursor: grabbing; }
+
+  .task-color-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .task-name-text {
+    flex: 1;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.18;
+    font-size: 0.76rem;
+    word-break: break-word;
+  }
+
+  .task-time-badge {
+    font-size: 0.65rem;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+
+  .days-scroll {
+    overflow-x: auto;
+    flex: 1;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+  .days-scroll::-webkit-scrollbar { height: 4px; }
+  .days-scroll::-webkit-scrollbar-track { background: var(--bg2); }
+  .days-scroll::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+  .days-inner { display: flex; min-width: max-content; }
+
+  .day-col { width: 52px; flex-shrink: 0; border-left: 1px solid var(--border-light); }
+  .day-col:last-child { border-left: none; }
+
+  .day-col.today .day-header-cell {
+    background: var(--day-today);
+    border-bottom-color: var(--day-today-border);
+    border-bottom-width: 3px;
+  }
+
+  .day-col.shabbat .day-header-cell { background: #f5e6f0; }
+  [data-theme="dark"] .day-col.shabbat .day-header-cell { background: #2a1528; }
+
+  .day-header-cell {
+    height: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--day-header);
+    border-bottom: 2px solid var(--border);
+    gap: 2px;
+  }
+
+  .day-name { font-size: 0.7rem; font-weight: 700; color: var(--text2); }
+  .day-date { font-size: 0.68rem; color: var(--text3); font-family: 'Frank Ruhl Libre', serif; }
+  .day-greg { font-size: 0.6rem; color: var(--text3); opacity: 0.7; }
+
+  .check-cell {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .check-cell:hover { background: var(--bg2); }
+  .check-cell.checked { background: var(--check-bg); }
+  .check-cell.partial { background: var(--partial-bg); }
+  .check-cell.failed { background: var(--failed-bg); }
+  .check-cell.late { background: #f0e6f8; }
+  [data-theme="dark"] .check-cell.late { background: #2a1535; }
+
+  .check-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    background: var(--surface);
+    position: relative;
+  }
+  .check-cell.checked .check-mark { background: var(--check); border-color: var(--check); color: white; transform: scale(1.05); }
+  .check-cell.partial .check-mark { background: var(--partial); border-color: var(--partial); color: white; transform: scale(1.05); }
+  .check-cell.failed .check-mark { background: var(--failed); border-color: var(--failed); color: white; transform: scale(1.05); }
+  .check-cell.late .check-mark { background: #7b3f8c; border-color: #7b3f8c; color: white; transform: scale(1.05); }
+  /* Horizontal strikethrough line on the ✓ symbol to indicate "completed but late" */
+  .check-cell.late .check-mark::after {
+    content: '';
+    position: absolute;
+    left: 4px; right: 4px;
+    top: 48%;
+    height: 2px;
+    background: rgba(255,255,255,0.82);
+    border-radius: 1px;
+    pointer-events: none;
+  }
+
+  .check-cell.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+  .check-cell.long-press-active::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 8px;
+    border: 2px solid var(--gold);
+    animation: longPressPulse 2s linear forwards;
+    pointer-events: none;
+  }
+
+  /* ─ cell with subtasks: small dots at bottom to signal there's more ─ */
+  .check-cell.has-subtasks .check-mark {
+    border-width: 2.5px;
+  }
+  .subtask-dots {
+    position: absolute;
+    bottom: 3px;
+    display: flex;
+    gap: 2px;
+  }
+  .subtask-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
+  .subtask-dot.done   { background: var(--check); }
+  .subtask-dot.failed { background: var(--failed); }
+  .subtask-dot.late   { background: #7b3f8c; }
+
+  /* ─ SUBTASK PANEL (floating modal, same style as note modal) ─ */
+  #subtask-overlay { align-items: flex-start; justify-content: center; }
+  #subtask-overlay .modal {
+    margin-top: 6vh;
+    border-radius: 20px;
+    transform: translateY(-40px) scale(0.96);
+    opacity: 0;
+    transition: transform 0.25s, opacity 0.25s;
+    max-width: 360px;
+    padding-bottom: 24px;
+  }
+  #subtask-overlay.open .modal { transform: translateY(0) scale(1); opacity: 1; }
+
+  .subtask-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+    gap: 10px;
+  }
+  .subtask-row:last-child { border-bottom: none; }
+
+  .subtask-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .subtask-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .subtask-btn.done   { background: var(--check);   border-color: var(--check);   color: white; }
+  .subtask-btn.failed { background: var(--failed);  border-color: var(--failed);  color: white; }
+  .subtask-btn.late   { background: #7b3f8c;        border-color: #7b3f8c;        color: white; position: relative; }
+  .subtask-btn.late::after {
+    content: '';
+    position: absolute;
+    left: 6px; right: 6px;
+    top: 48%;
+    height: 2px;
+    background: rgba(255,255,255,0.82);
+    border-radius: 1px;
+    pointer-events: none;
+  }
+
+  /* ─ edit modal subtask section ─ */
+  .subtask-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .subtask-edit-row:last-child { border-bottom: none; }
+  .subtask-edit-input {
+    flex: 1;
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.88rem;
+    color: var(--text);
+    outline: none;
+  }
+  .subtask-edit-input:focus { border-color: var(--accent); }
+  .subtask-delete-btn {
+    background: transparent;
+    border: none;
+    color: #c0392b;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .subtask-add-btn {
+    width: 100%;
+    margin-top: 10px;
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    padding: 8px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text3);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .subtask-add-btn:hover { background: var(--bg2); }
+  @keyframes longPressPulse {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .note-marker {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 1.5px var(--surface);
+  }
+
+  /* Note marker on day header — centered at bottom */
+  .day-header-cell {
+    position: relative;
+  }
+  .day-note-marker {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 1.5px var(--header-bg);
+  }
+
+  /* ───── ADD TASK BTN ───── */
+  .add-task-row {
+    display: flex;
+    padding: 12px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border-light);
+  }
+
+  .add-task-btn {
+    flex: 1;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .add-task-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+  .add-task-btn:active { transform: translateY(0); }
+
+  /* ───── MODAL ───── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--modal-bg);
+    border-radius: 20px 20px 0 0;
+    width: 90vw;
+    max-width: 380px;
+    padding: 20px 18px 28px;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  /* Both the note modal AND the add/edit task modal open centered within the
+     TOP half of the screen, so the on-screen keyboard never hides their fields. */
+  #note-overlay, #modal-overlay { align-items: flex-start; justify-content: center; }
+  #note-overlay .modal, #modal-overlay .modal {
+    margin-top: 6vh;
+    border-radius: 20px;
+    transform: translateY(-40px) scale(0.96);
+    opacity: 0;
+    transition: transform 0.25s, opacity 0.25s;
+  }
+  #note-overlay.open .modal, #modal-overlay.open .modal { transform: translateY(0) scale(1); opacity: 1; }
+
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+
+  .modal-title {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .form-group { margin-bottom: 18px; }
+
+  .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text2); margin-bottom: 8px; }
+
+  .form-input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.95rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+
+  .days-picker {
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none; /* Firefox */
+  }
+  .days-picker::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+  .day-chip {
+    padding: 5px 9px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text2);
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .day-chip.selected { background: var(--accent); border-color: var(--accent); color: white; }
+  .day-chip-all { border-style: dashed; color: var(--text3); }
+
+  .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .color-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .color-swatch.selected { border-color: var(--text); transform: scale(1.15); }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+
+  .btn-save {
+    flex: 2;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-save:hover { background: var(--accent2); }
+
+  .btn-delete {
+    flex: 1;
+    background: transparent;
+    color: #c0392b;
+    border: 1.5px solid #c0392b;
+    border-radius: 12px;
+    padding: 13px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-delete:hover { background: rgba(192,57,43,0.1); }
+
+  .btn-cancel {
+    flex: 1;
+    background: var(--bg2);
+    color: var(--text2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 13px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ───── HISTORY TAB ───── */
+  .history-view { padding: 16px; display: none; }
+  .history-view.active { display: block; }
+
+  .history-week {
+    background: var(--surface);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .history-week-header {
+    background: var(--day-header);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .history-parasha { font-family: 'Frank Ruhl Libre', serif; font-size: 1.05rem; font-weight: 700; color: var(--accent); }
+  .history-dates { font-size: 0.75rem; color: var(--text3); }
+
+  .history-stats {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--check);
+    background: var(--check-bg);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .history-delete-btn {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: #c0392b;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .history-delete-btn:hover { background: rgba(192,57,43,0.1); border-color: #c0392b; }
+
+  .history-body { padding: 12px 16px; display: none; }
+  .history-body.open { display: block; }
+
+  .history-task-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 0.85rem;
+    color: var(--text2);
+    gap: 8px;
+  }
+  .history-task-row:last-child { border-bottom: none; }
+
+  .history-checks { display: flex; gap: 4px; }
+
+  .history-check-dot { width: 14px; height: 14px; border-radius: 4px; background: var(--border-light); }
+  .history-check-dot.checked { background: var(--check); }
+  .history-check-dot.done { background: var(--check); }
+  .history-check-dot.partial { background: var(--partial); }
+  .history-check-dot.failed { background: var(--failed); }
+  .history-check-dot.late { background: #7b3f8c; }
+
+  /* ───── EMPTY STATE ───── */
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text3); }
+  .empty-state-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.5; }
+  .empty-state p { font-size: 0.9rem; line-height: 1.6; }
+
+  /* ───── TOAST ───── */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .time-toggle {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .time-toggle-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 4px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    font-family: 'Heebo', sans-serif;
+    font-size: clamp(0.6rem, 2.2vw, 0.72rem);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    line-height: 1.3;
+    word-break: keep-all;
+  }
+  .time-toggle-btn.selected { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .per-day-time-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .per-day-time-row:last-child { border-bottom: none; }
+
+  .per-day-time-label { width: 36px; flex-shrink: 0; font-size: 0.82rem; font-weight: 600; color: var(--text2); }
+
+  .per-day-time-row input[type="time"] {
+    flex: 1;
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+
+  .section-divider { height: 1px; background: var(--border-light); margin: 8px 0; }
+
+  /* ─── REMINDER SECTION ─── */
+  .reminder-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0 10px;
+  }
+  .reminder-switch {
+    width: 44px; height: 26px;
+    background: var(--border);
+    border-radius: 14px;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    display: inline-block;
+  }
+  .reminder-switch.on { background: var(--accent); }
+  .reminder-switch-knob {
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .reminder-switch.on .reminder-switch-knob { transform: translateX(-18px); }
+
+  .permission-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+  .permission-indicator.granted { background: var(--check-bg); color: var(--check); }
+  .permission-indicator.denied  { background: var(--failed-bg); color: var(--failed); }
+  .permission-indicator.unknown { background: var(--bg2); color: var(--text3); }
+  .permission-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .permission-indicator.granted .permission-dot { background: var(--check); }
+  .permission-indicator.denied  .permission-dot { background: var(--failed); }
+  .permission-indicator.unknown .permission-dot { background: var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="parasha-title">
+      <span>פרשת השבוע</span>
+      <span id="parasha-name">טוען...</span>
+    </div>
+    <div class="header-controls">
+      <button class="btn-install" id="install-btn">📲 התקן אפליקציה</button>
+      <button class="btn-icon" id="zoom-out" title="הקטן תצוגה">－</button>
+      <button class="btn-icon" id="zoom-in" title="הגדל תצוגה">＋</button>
+      <button class="btn-icon" id="theme-toggle" title="מצב כהה/בהיר">🌙</button>
+      <button class="btn-icon" id="whatsapp-share" title="שלח סיכום בוואטסאפ" style="background:#25D366;border-color:#25D366;">
+        <svg viewBox="0 0 32 32" width="18" height="18" fill="white"><path d="M16.04 4C9.4 4 4 9.4 4 16.04c0 2.4.66 4.64 1.8 6.56L4 28l5.6-1.78a11.98 11.98 0 0 0 6.44 1.82c6.64 0 12.04-5.4 12.04-12.04C28.08 9.4 22.68 4 16.04 4zm0 21.96c-2.1 0-4.06-.58-5.74-1.6l-.4-.24-3.98 1.27 1.3-3.86-.26-.4a9.93 9.93 0 0 1-1.6-5.35c0-5.5 4.5-10 10.06-10 2.68 0 5.2 1.05 7.1 2.95a9.97 9.97 0 0 1 2.94 7.1c.02 5.55-4.46 10.13-9.42 10.13zm5.5-7.5c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.46.13-.61.15-.15.34-.4.5-.6.17-.2.22-.34.34-.57.12-.22.06-.42-.04-.57-.1-.15-.6-1.45-.82-1.98-.22-.52-.44-.45-.6-.46-.16-.01-.34-.01-.52-.01-.18 0-.47.07-.72.32-.25.27-.96.94-.96 2.29 0 1.35.98 2.66 1.12 2.84.13.18 1.86 2.85 4.55 3.88 2.7 1.03 2.7.69 3.18.65.48-.04 1.57-.64 1.79-1.27.22-.62.22-1.15.15-1.27-.07-.12-.27-.2-.57-.34z"/></svg>
+      </button>
+      <button class="btn-icon" id="reset-app-btn" title="איפוס לברירת מחדל" style="font-size:1.3rem;">↺</button>
+    </div>
+  </div>
+  <div class="hebrew-date" id="hebrew-date-range">טוען תאריכים...</div>
+  <div class="week-nav">
+    <button class="week-nav-btn" id="prev-week">► שבוע קודם</button>
+    <span class="week-indicator" id="week-indicator">שבוע נוכחי</span>
+    <button class="week-nav-btn" id="next-week">שבוע הבא ◄</button>
+  </div>
+</div>
+
+<!-- INSTALL INSTRUCTIONS MODAL -->
+<div class="modal-overlay" id="install-modal" style="align-items:flex-start;justify-content:center;">
+  <div class="modal" style="max-width:420px;border-radius:20px;padding:24px 20px;margin-top:8vh;">
+    <div class="modal-title" id="install-modal-title" style="margin-bottom:6px;">📲 התקנת האפליקציה</div>
+    <div id="install-modal-body"></div>
+    <div class="modal-actions" style="margin-top:18px;">
+      <button class="btn-save" id="install-modal-action" style="display:none;">התקן עכשיו</button>
+      <button class="btn-cancel" id="install-modal-close">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="current">שבוע נוכחי</div>
+  <div class="tab" data-tab="history">היסטוריה 📚</div>
+</div>
+
+<!-- CURRENT WEEK TAB -->
+<div id="tab-current">
+  <div class="stats-row">
+    <span id="stats-done">0 בוצעו</span>
+    <span id="stats-pct">0%</span>
+    <span id="stats-total">מתוך 0 אפשריות</span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <div class="grid-container" id="grid-container">
+    <div class="task-col" id="task-col">
+      <div class="task-col-header">משימה</div>
+      <div id="task-names"></div>
+    </div>
+    <div class="days-scroll" id="days-scroll">
+      <div class="days-inner" id="days-inner"></div>
+    </div>
+  </div>
+
+  <div class="add-task-row">
+    <button class="add-task-btn" id="add-task-btn">＋ הוסף משימה</button>
+  </div>
+</div>
+
+<!-- HISTORY TAB -->
+<div class="history-view" id="tab-history"></div>
+
+<!-- ADD/EDIT TASK MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">משימה חדשה</div>
+
+    <div class="form-group">
+      <label class="form-label">שם המשימה</label>
+      <input class="form-input" type="text" id="task-name-input" placeholder="לדוגמה: תפילת שחרית" maxlength="40">
+    </div>
+
+    <div class="form-group" id="days-picker-group">
+      <label class="form-label">בחר ימים</label>
+      <div class="days-picker" id="days-picker">
+        <button class="day-chip" data-day="0">א'</button>
+        <button class="day-chip" data-day="1">ב'</button>
+        <button class="day-chip" data-day="2">ג'</button>
+        <button class="day-chip" data-day="3">ד'</button>
+        <button class="day-chip" data-day="4">ה'</button>
+        <button class="day-chip" data-day="5">ו'</button>
+        <button class="day-chip" data-day="6">ש'</button>
+        <button class="day-chip day-chip-all" id="select-all-days">הכל</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">זמן</label>
+      <div class="time-toggle">
+        <button class="time-toggle-btn selected" data-time="allday">כל היום</button>
+        <button class="time-toggle-btn" data-time="sameTime">שעה אחת לכל השבוע</button>
+        <button class="time-toggle-btn" data-time="perDay">שעה שונה לכל יום</button>
+      </div>
+      <input class="form-input" type="time" id="task-time-input" style="display:none">
+      <div id="per-day-times" style="display:none"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>תתי משימות</span>
+        <span style="font-size:0.72rem;color:var(--text3);font-weight:400;" id="subtask-count-hint">עד 6</span>
+      </label>
+      <div id="subtask-edit-list"></div>
+      <button class="subtask-add-btn" id="subtask-add-btn">＋ הוסף תת-משימה</button>
+    </div>
+
+    <!-- REMINDER SECTION — always visible -->
+    <div class="form-group" id="reminder-group">
+      <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
+        <span>תזכורת 🔔</span>
+        <div id="permission-indicator" class="permission-indicator unknown">
+          <div class="permission-dot"></div>
+          <span id="permission-text">בודק...</span>
+        </div>
+      </label>
+
+      <!-- shown when timeMode = allday -->
+      <div id="reminder-no-time-msg" style="font-size:0.78rem;color:var(--text3);margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:8px;line-height:1.5;">
+        כדי להגדיר תזכורת, יש לבחור שעה (לא "כל היום") בקטע הזמן למעלה.
+      </div>
+
+      <!-- shown when timeMode != allday -->
+      <div id="reminder-controls">
+        <div class="reminder-toggle-row">
+          <span style="font-size:0.82rem;color:var(--text2);">הפעל תזכורת</span>
+          <span class="reminder-switch" id="reminder-switch"><span class="reminder-switch-knob"></span></span>
+        </div>
+
+        <div id="reminder-details" style="display:none;">
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" style="margin-bottom:6px;">ימי תזכורת</label>
+            <div class="days-picker" id="reminder-days-picker">
+              <button class="day-chip" data-rday="0">א'</button>
+              <button class="day-chip" data-rday="1">ב'</button>
+              <button class="day-chip" data-rday="2">ג'</button>
+              <button class="day-chip" data-rday="3">ד'</button>
+              <button class="day-chip" data-rday="4">ה'</button>
+              <button class="day-chip" data-rday="5">ו'</button>
+              <button class="day-chip" data-rday="6">ש'</button>
+              <button class="day-chip day-chip-all" id="select-all-reminder-days">הכל</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" style="margin-bottom:6px;">כמה זמן לפני</label>
+            <select class="form-input" id="reminder-lead-select">
+              <option value="0">בדיוק בזמן</option>
+              <option value="5">5 דקות לפני</option>
+              <option value="10">10 דקות לפני</option>
+              <option value="15">15 דקות לפני</option>
+              <option value="30">30 דקות לפני</option>
+              <option value="60">שעה לפני</option>
+            </select>
+          </div>
+
+          <button type="button" class="time-toggle-btn" id="test-reminder-btn"
+            style="width:100%;padding:9px;font-size:0.82rem;margin-top:2px;">
+            🔔 בדוק התראה עכשיו
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">צבע</label>
+      <div class="color-picker" id="color-picker">
+        <div class="color-swatch selected" data-color="#8b4513" style="background:#8b4513"></div>
+        <div class="color-swatch" data-color="#4a7c59" style="background:#4a7c59"></div>
+        <div class="color-swatch" data-color="#1a6ba0" style="background:#1a6ba0"></div>
+        <div class="color-swatch" data-color="#7b3f8c" style="background:#7b3f8c"></div>
+        <div class="color-swatch" data-color="#c0703a" style="background:#c0703a"></div>
+        <div class="color-swatch" data-color="#c9a84c" style="background:#c9a84c"></div>
+        <div class="color-swatch" data-color="#2d7d9a" style="background:#2d7d9a"></div>
+        <div class="color-swatch" data-color="#a0522d" style="background:#a0522d"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions" id="modal-actions">
+      <button class="btn-save" id="btn-save">שמור</button>
+      <button class="btn-cancel" id="btn-cancel">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="modal" style="max-width:380px;border-radius:20px;padding:24px 20px;">
+    <div class="modal-title" id="confirm-title" style="margin-bottom:10px;">למחוק?</div>
+    <div id="confirm-message" style="font-size:0.9rem;color:var(--text2);line-height:1.5;margin-bottom:20px;"></div>
+    <div class="modal-actions" style="margin-top:0;">
+      <button class="btn-delete" id="confirm-yes" style="flex:1;">מחק</button>
+      <button class="btn-cancel" id="confirm-no" style="flex:1;">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="note-overlay">
+  <div class="modal" style="max-width:380px;border-radius:20px;padding:24px 20px;">
+    <div class="modal-title" style="margin-bottom:2px;">הערה / תזכורת 📝</div>
+    <div id="note-modal-subtitle" style="font-size:0.8rem;color:var(--text3);margin-bottom:16px;"></div>
+    <input class="form-input" type="text" id="note-input" maxlength="40" placeholder="כתוב הערה קצרה...">
+    <div id="note-char-count" style="font-size:0.7rem;color:var(--text3);text-align:left;margin-top:6px;">0/40</div>
+    <div class="modal-actions">
+      <button class="btn-save" id="note-save-btn">שמור</button>
+      <button class="btn-delete" id="note-delete-btn" style="display:none;">מחק הערה</button>
+      <button class="btn-cancel" id="note-cancel-btn">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="subtask-overlay">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="subtask-panel-title" style="margin-bottom:2px;font-size:1.1rem;">תתי משימות</div>
+    <div id="subtask-panel-subtitle" style="font-size:0.78rem;color:var(--text3);margin-bottom:14px;"></div>
+    <div id="subtask-panel-rows"></div>
+    <button class="btn-cancel" id="subtask-panel-close" style="width:100%;margin-top:14px;">סגור</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// HEBREW CALENDAR ENGINE
+// ═══════════════════════════════════════════════════════
+
+const HEB = {
+  numToHeb(n) {
+    if (n === 15) return 'טו';
+    if (n === 16) return 'טז';
+    const hundreds = ['','ק','ר','ש','ת','תק','תר','תש','תת','תתק'];
+    const tens = ['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
+    const ones = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+    let s = '';
+    if (n >= 100) { s += hundreds[Math.floor(n/100)]; n %= 100; }
+    if (n >= 10)  { s += tens[Math.floor(n/10)]; n %= 10; }
+    if (n > 0)    { s += ones[n]; }
+    return s;
+  },
+
+  toHebrew(date) {
+    const jdn = this.gregorianToJDN(date.getFullYear(), date.getMonth()+1, date.getDate());
+    return this.jdnToHebrew(jdn);
+  },
+
+  gregorianToJDN(y, m, d) {
+    const a = Math.floor((14-m)/12);
+    const yy = y + 4800 - a;
+    const mm = m + 12*a - 3;
+    return d + Math.floor((153*mm+2)/5) + 365*yy + Math.floor(yy/4) - Math.floor(yy/100) + Math.floor(yy/400) - 32045;
+  },
+
+  jdnToHebrew(jdn) {
+    let year = Math.floor((jdn - 347997) / 365.25) + 1;
+    while (this.hebrewYearStart(year+1) <= jdn) year++;
+    while (this.hebrewYearStart(year) > jdn) year--;
+
+    let dayOfYear = jdn - this.hebrewYearStart(year) + 1;
+    const isLeap = this.isLeapYear(year);
+    const monthLengths = this.getMonthLengths(year);
+    const monthOrder = isLeap
+      ? [7,8,9,10,11,12,13,14,1,2,3,4,5,6]
+      : [7,8,9,10,11,12,1,2,3,4,5,6];
+
+    let month = 0, day = 0;
+    for (let m of monthOrder) {
+      const len = monthLengths[m];
+      if (dayOfYear <= len) { month = m; day = dayOfYear; break; }
+      dayOfYear -= len;
+    }
+    return { year, month, day };
+  },
+
+  hebrewYearStart(year) {
+    const elapsed = this.elapsedDays(year);
+    const parts = this.elapsedParts(year);
+    let rosh = elapsed;
+    if ((!this.isLeapYear(year) && parts.day === 3 && parts.parts >= 9924) ||
+        (this.isLeapYear(year-1) && parts.day === 2 && parts.parts >= 16789)) {
+      rosh++;
+    }
+    if ([0,3,5].indexOf(rosh % 7) !== -1) rosh++;
+    return rosh + 347997;
+  },
+
+  elapsedDays(year) {
+    const months = Math.floor((235*year - 234) / 19);
+    const parts = 12084 + 13753*months;
+    let day = months*29 + Math.floor(parts/25920);
+    if ((3*(day+1)) % 7 < 3) day++;
+    return day;
+  },
+
+  elapsedParts(year) {
+    const months = Math.floor((235*year - 234) / 19);
+    const parts = 12084 + 13753*months;
+    return { day: (months*29 + Math.floor(parts/25920)) % 7, parts: parts % 25920 };
+  },
+
+  isLeapYear(year) {
+    return ((7*year + 1) % 19) < 7;
+  },
+
+  getMonthLengths(year) {
+    const isLeap = this.isLeapYear(year);
+    const yearDays = this.hebrewYearStart(year+1) - this.hebrewYearStart(year);
+    let cheshvan = 29, kislev = 30;
+    if (yearDays % 10 === 5) cheshvan = 30;
+    if (yearDays % 10 === 3) kislev = 29;
+    const lengths = { 1:30,2:29,3:30,4:29,5:30,6:29, 7:30,8:cheshvan,9:kislev,10:29,11:30 };
+    if (isLeap) { lengths[12]=30; lengths[13]=29; lengths[14]=29; }
+    else { lengths[12]=29; }
+    return lengths;
+  },
+
+  formatDate(hd) {
+    const dayStr = this.numToHeb(hd.day) + '\'';
+    const monthNames = {
+      1:'ניסן',2:'אייר',3:'סיון',4:'תמוז',5:'אב',6:'אלול',
+      7:'תשרי',8:'חשוון',9:'כסלו',10:'טבת',11:'שבט',
+      12:'אדר',13:'אדר א\'',14:'אדר ב\''
+    };
+    return dayStr + ' ' + monthNames[hd.month];
+  },
+
+  yearStr(y) {
+    let n = y % 1000;
+    const hundreds = ['','ק','ר','ש','ת','תק','תר','תש','תת','תתק'];
+    const tens = ['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
+    const ones = ['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+    let h = '';
+    if (n >= 100) { h += hundreds[Math.floor(n/100)]; n %= 100; }
+    if (n >= 10)  { h += tens[Math.floor(n/10)]; n %= 10; }
+    if (n > 0)    { h += ones[n]; }
+    if (h.length >= 2) h = h.slice(0,-1) + '"' + h.slice(-1);
+    return h;
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+// PARASHA DATABASE — verified against Israel's official reading calendar
+// ═══════════════════════════════════════════════════════
+
+const PARASHA_DB = {
+  "2024-10-06": "בראשית", "2024-10-13": "נח", "2024-10-20": "לך לך", "2024-10-27": "וירא",
+  "2024-11-03": "חיי שרה", "2024-11-10": "תולדות", "2024-11-17": "ויצא", "2024-11-24": "וישלח",
+  "2024-12-01": "וישב", "2024-12-08": "מקץ", "2024-12-15": "ויגש", "2024-12-22": "ויחי",
+  "2024-12-29": "שמות", "2025-01-05": "וארא", "2025-01-12": "בא", "2025-01-19": "בשלח",
+  "2025-01-26": "יתרו", "2025-02-02": "משפטים", "2025-02-09": "תרומה", "2025-02-16": "תצוה",
+  "2025-02-23": "כי תשא", "2025-03-02": "ויקהל-פקודי", "2025-03-09": "ויקרא", "2025-03-16": "צו",
+  "2025-03-23": "שמיני", "2025-03-30": "תזריע-מצורע", "2025-04-06": "אחרי מות-קדושים",
+  "2025-04-13": "אמור", "2025-04-20": "בהר-בחוקותי", "2025-04-27": "במדבר", "2025-05-04": "נשא",
+  "2025-05-11": "בהעלותך", "2025-05-18": "שלח", "2025-05-25": "קרח", "2025-06-01": "חוקת",
+  "2025-06-08": "בלק", "2025-06-15": "פינחס", "2025-06-22": "מטות-מסעי", "2025-06-29": "דברים",
+  "2025-07-06": "ואתחנן", "2025-07-13": "עקב", "2025-07-20": "ראה", "2025-07-27": "שופטים",
+  "2025-08-03": "כי תצא", "2025-08-10": "כי תבוא", "2025-08-17": "נצבים-וילך", "2025-08-24": "האזינו",
+  "2025-08-31": "וזאת הברכה",
+  "2025-09-21": "וילך", "2025-09-28": "האזינו", "2025-10-05": "סוכות",
+  "2025-10-12": "בראשית", "2025-10-19": "נח", "2025-10-26": "לך לך", "2025-11-02": "וירא",
+  "2025-11-09": "חיי שרה", "2025-11-16": "תולדות", "2025-11-23": "ויצא", "2025-11-30": "וישלח",
+  "2025-12-07": "וישב", "2025-12-14": "מקץ", "2025-12-21": "ויגש", "2025-12-28": "ויחי",
+  "2026-01-04": "שמות", "2026-01-11": "וארא", "2026-01-18": "בא", "2026-01-25": "בשלח",
+  "2026-02-01": "יתרו", "2026-02-08": "משפטים", "2026-02-15": "תרומה", "2026-02-22": "תצוה",
+  "2026-03-01": "כי תשא", "2026-03-08": "ויקהל-פקודי", "2026-03-15": "ויקרא", "2026-03-22": "צו",
+  "2026-03-29": "פסח", "2026-04-05": "שמיני", "2026-04-12": "תזריע-מצורע",
+  "2026-04-19": "אחרי מות-קדושים", "2026-04-26": "אמור", "2026-05-03": "בהר-בחוקותי",
+  "2026-05-10": "במדבר", "2026-05-17": "נשא", "2026-05-24": "בהעלותך", "2026-05-31": "שלח",
+  "2026-06-07": "קורח", "2026-06-14": "חוקת", "2026-06-21": "בלק", "2026-06-28": "פינחס",
+  "2026-07-05": "מטות-מסעי", "2026-07-12": "דברים", "2026-07-19": "ואתחנן", "2026-07-26": "עקב",
+  "2026-08-02": "ראה", "2026-08-09": "שופטים", "2026-08-16": "כי תצא", "2026-08-23": "כי תבוא",
+  "2026-08-30": "נצבים-וילך",
+
+  // 5787 (Israel) — leap year, so several parshiot read separately that were
+  // combined in 5786 (Vayakhel/Pekudei, Tazria/Metzora, Achrei Mot/Kedoshim,
+  // Behar/Bechukotai, Chukat/Balak)
+  "2026-09-06": "ראש השנה", "2026-09-13": "האזינו", "2026-09-20": "סוכות",
+  "2026-09-27": "שמחת תורה", "2026-10-04": "בראשית", "2026-10-11": "נח",
+  "2026-10-18": "לך לך", "2026-10-25": "וירא", "2026-11-01": "חיי שרה",
+  "2026-11-08": "תולדות", "2026-11-15": "ויצא", "2026-11-22": "וישלח",
+  "2026-11-29": "וישב", "2026-12-06": "מקץ", "2026-12-13": "ויגש",
+  "2026-12-20": "ויחי", "2026-12-27": "שמות", "2027-01-03": "וארא",
+  "2027-01-10": "בא", "2027-01-17": "בשלח", "2027-01-24": "יתרו",
+  "2027-01-31": "משפטים", "2027-02-07": "תרומה", "2027-02-14": "תצוה",
+  "2027-02-21": "כי תשא", "2027-02-28": "ויקהל", "2027-03-07": "פקודי",
+  "2027-03-14": "ויקרא", "2027-03-21": "צו", "2027-03-28": "שמיני",
+  "2027-04-04": "תזריע", "2027-04-11": "מצורע", "2027-04-18": "פסח",
+  "2027-04-25": "אחרי מות", "2027-05-02": "קדושים", "2027-05-09": "אמור",
+  "2027-05-16": "בהר", "2027-05-23": "בחוקותי", "2027-05-30": "במדבר",
+  "2027-06-06": "נשא", "2027-06-13": "בהעלותך", "2027-06-20": "שלח",
+  "2027-06-27": "קורח", "2027-07-04": "חוקת", "2027-07-11": "בלק",
+  "2027-07-18": "פינחס", "2027-07-25": "מטות-מסעי", "2027-08-01": "דברים",
+  "2027-08-08": "ואתחנן", "2027-08-15": "עקב", "2027-08-22": "ראה",
+  "2027-08-29": "שופטים", "2027-09-05": "כי תצא", "2027-09-12": "כי תבוא",
+  "2027-09-19": "נצבים-וילך",
+
+  // 5788 (Israel)
+  "2027-09-26": "ראש השנה", "2027-10-03": "האזינו", "2027-10-10": "סוכות",
+  "2027-10-17": "שמחת תורה", "2027-10-24": "בראשית", "2027-10-31": "נח",
+  "2027-11-07": "לך לך", "2027-11-14": "וירא", "2027-11-21": "חיי שרה",
+  "2027-11-28": "תולדות", "2027-12-05": "ויצא", "2027-12-12": "וישלח",
+  "2027-12-19": "וישב", "2027-12-26": "מקץ", "2028-01-02": "ויגש",
+  "2028-01-09": "ויחי", "2028-01-16": "שמות", "2028-01-23": "וארא",
+  "2028-01-30": "בא", "2028-02-06": "בשלח", "2028-02-13": "יתרו",
+  "2028-02-20": "משפטים", "2028-02-27": "תרומה", "2028-03-05": "תצוה",
+  "2028-03-12": "כי תשא", "2028-03-19": "ויקהל-פקודי", "2028-03-26": "ויקרא",
+  "2028-04-02": "צו", "2028-04-09": "פסח", "2028-04-16": "שמיני",
+  "2028-04-23": "תזריע-מצורע", "2028-04-30": "אחרי מות-קדושים", "2028-05-07": "אמור",
+  "2028-05-14": "בהר-בחוקותי", "2028-05-21": "במדבר", "2028-05-28": "נשא",
+  "2028-06-04": "בהעלותך", "2028-06-11": "שלח", "2028-06-18": "קורח",
+  "2028-06-25": "חוקת", "2028-07-02": "בלק", "2028-07-09": "פינחס",
+  "2028-07-16": "מטות-מסעי", "2028-07-23": "דברים", "2028-07-30": "ואתחנן",
+  "2028-08-06": "עקב", "2028-08-13": "ראה", "2028-08-20": "שופטים",
+  "2028-08-27": "כי תצא", "2028-09-03": "כי תבוא", "2028-09-10": "נצבים-וילך",
+};
+
+function getSundayOfWeek(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  const day = d.getDay();
+  d.setDate(d.getDate() - day);
+  return d;
+}
+
+function dateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getParasha(sundayDate) {
+  const keys = Object.keys(PARASHA_DB).sort();
+  let best = null;
+  for (const k of keys) {
+    if (k <= dateKey(sundayDate)) best = k;
+    else break;
+  }
+  return best ? PARASHA_DB[best] : 'פרשת השבוע';
+}
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+
+let tasks = JSON.parse(localStorage.getItem('shabbat-tasks') || '[]');
+let checks = JSON.parse(localStorage.getItem('shabbat-checks') || '{}');
+let history = JSON.parse(localStorage.getItem('shabbat-history') || '[]');
+let notes = JSON.parse(localStorage.getItem('shabbat-notes') || '{}');
+let currentSunday = getSundayOfWeek(new Date());
+let editingTaskId = null;
+let didInitialScroll = false;
+let preservedScrollLeft = null;
+
+const COLORS = ['#8b4513','#4a7c59','#1a6ba0','#7b3f8c','#c0703a','#c9a84c','#2d7d9a','#a0522d'];
+
+function save() {
+  localStorage.setItem('shabbat-tasks', JSON.stringify(tasks));
+  localStorage.setItem('shabbat-checks', JSON.stringify(checks));
+  localStorage.setItem('shabbat-history', JSON.stringify(history));
+  localStorage.setItem('shabbat-notes', JSON.stringify(notes));
+}
+
+function getWeekDays(sunday) {
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(sunday);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
+
+const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const DAY_SHORT = ['א\'','ב\'','ג\'','ד\'','ה\'','ו\'','ש\''];
+
+function checkKey(taskId, dayIndex, weekKey) {
+  return `${weekKey}-t${taskId}-d${dayIndex}`;
+}
+
+function subtaskKey(taskId, dayIndex, weekKey, subtaskId) {
+  return `${weekKey}-t${taskId}-d${dayIndex}-s${subtaskId}`;
+}
+
+function dayNoteKey(dayIndex, weekKey) {
+  return `${weekKey}-day-${dayIndex}`;
+}
+
+function weekKey(sunday) {
+  return dateKey(sunday);
+}
+
+// ═══════════════════════════════════════════════════════
+// TASK STATUS (three states: done / partial / failed)
+// ═══════════════════════════════════════════════════════
+
+const STATUS_CYCLE = ['none', 'done', 'partial', 'failed', 'late'];
+const STATUS_SYMBOL = { none: '', done: '✓', partial: '◐', failed: '−', late: '✓' };
+const STATUS_CLASS  = { none: '', done: 'checked', partial: 'partial', failed: 'failed', late: 'late' };
+
+function getStatus(key, source) {
+  const data = source || checks;
+  const v = data[key];
+  if (v === true) return 'done'; // legacy boolean data
+  return v || 'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+
+function render() {
+  renderHeader();
+  renderGrid();
+  renderProgress();
+}
+
+function renderHeader() {
+  const sunday = currentSunday;
+  const days = getWeekDays(sunday);
+  const saturday = days[6];
+
+  const parasha = getParasha(sunday);
+  document.getElementById('parasha-name').textContent = parasha;
+
+  const hdSun = HEB.toHebrew(sunday);
+  const hdSat = HEB.toHebrew(saturday);
+  let dateRange = HEB.formatDate(hdSun) + ' - ' + HEB.formatDate(hdSat) + ', ' + HEB.yearStr(hdSun.year);
+  document.getElementById('hebrew-date-range').textContent = dateRange;
+
+  const today = getSundayOfWeek(new Date());
+  const diff = Math.round((sunday - today) / 86400000 / 7);
+  if (diff === 0) document.getElementById('week-indicator').textContent = '● שבוע נוכחי';
+  else if (diff === -1) document.getElementById('week-indicator').textContent = 'שבוע שעבר';
+  else if (diff === 1) document.getElementById('week-indicator').textContent = 'שבוע הבא';
+  else if (diff < 0) document.getElementById('week-indicator').textContent = `לפני ${-diff} שבועות`;
+  else document.getElementById('week-indicator').textContent = `בעוד ${diff} שבועות`;
+}
+
+function isTaskActiveOnDay(task, dayIndex) {
+  if (task.freq === 'daily') return true;
+  if (task.freq === 'weekly') return dayIndex === 6;
+  if (task.freq === 'custom') return task.days && task.days.includes(dayIndex);
+  return true;
+}
+
+function getTaskTimeForDay(task, dayIndex) {
+  if (task.timeMode === 'sameTime') return task.time || '';
+  if (task.timeMode === 'perDay') return (task.times && task.times[dayIndex]) || '';
+  return '';
+}
+
+function getTaskTimeBadgeText(task) {
+  if (task.timeMode === 'sameTime' && task.time) return task.time;
+  if (task.timeMode === 'perDay' && task.times && Object.keys(task.times).length) {
+    const vals = Object.values(task.times);
+    const allSame = vals.every(v => v === vals[0]);
+    return allSame ? vals[0] : 'שעות משתנות';
+  }
+  return '';
+}
+
+function renderGrid() {
+  const scrollElBefore = document.getElementById('days-scroll');
+  if (scrollElBefore && didInitialScroll) preservedScrollLeft = scrollElBefore.scrollLeft;
+
+  const days = getWeekDays(currentSunday);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const wk = weekKey(currentSunday);
+
+  const taskNamesEl = document.getElementById('task-names');
+  taskNamesEl.innerHTML = '';
+  tasks.forEach((task, idx) => {
+    const div = document.createElement('div');
+    div.className = 'task-name-cell';
+    div.dataset.idx = idx;
+    const badge = getTaskTimeBadgeText(task);
+    div.innerHTML = `
+      <div class="drag-handle">⠿</div>
+      <div class="task-color-dot" style="background:${task.color||'#8b4513'}"></div>
+      <div style="flex:1;overflow:hidden;min-width:0;">
+        <div class="task-name-text">${task.name}</div>
+        ${badge ? `<div class="task-time-badge">${badge}</div>` : ''}
+      </div>
+    `;
+    div.addEventListener('click', (e) => {
+      if (dragHappened) { dragHappened = false; return; }
+      openEditModal(task);
+    });
+    attachDragHandlers(div, idx);
+    taskNamesEl.appendChild(div);
+  });
+
+  if (tasks.length === 0) {
+    taskNamesEl.innerHTML = '<div style="padding:20px 8px;text-align:center;color:var(--text3);font-size:0.75rem;">אין משימות</div>';
+  }
+
+  const daysInner = document.getElementById('days-inner');
+  daysInner.innerHTML = '';
+
+  days.forEach((day, di) => {
+    const isToday = day.getTime() === today.getTime();
+    const isSat = di === 6;
+    const col = document.createElement('div');
+    col.className = 'day-col' + (isToday ? ' today' : '') + (isSat ? ' shabbat' : '');
+
+    const hd = HEB.toHebrew(day);
+    const gregDay = day.getDate() + '/' + (day.getMonth()+1);
+    const dnKey = dayNoteKey(di, wk);
+    const hasDayNote = !!notes[dnKey];
+
+    col.innerHTML = `<div class="day-header-cell" data-di="${di}">
+      <div class="day-name">${DAY_SHORT[di]}</div>
+      <div class="day-date">${HEB.numToHeb(hd.day)}'</div>
+      <div class="day-greg">${gregDay}</div>
+      ${hasDayNote ? '<div class="day-note-marker" title="יש הערה ליום זה"></div>' : ''}
+    </div>`;
+
+    // Long-press on the day header opens a day-level note
+    const dayHeaderEl = col.querySelector('.day-header-cell');
+    attachDayHeaderLongPress(dayHeaderEl, di, wk);
+
+    tasks.forEach(task => {
+      const active = isTaskActiveOnDay(task, di);
+      const key = checkKey(task.id, di, wk);
+      const hasNote = !!notes[key];
+      const subs = task.subtasks || [];
+      const hasSubs = subs.length > 0;
+
+      // Compute status: subtask tasks use auto-computed status
+      let status;
+      if (hasSubs && active) {
+        status = computeSubtaskStatus(task, di, wk);
+      } else {
+        status = getStatus(key);
+      }
+
+      const cell = document.createElement('div');
+      cell.className = 'check-cell'
+        + (STATUS_CLASS[status] ? ' ' + STATUS_CLASS[status] : '')
+        + (active ? '' : ' disabled')
+        + (hasSubs ? ' has-subtasks' : '');
+      cell.dataset.task = task.id;
+      cell.dataset.day = di;
+
+      // Build subtask dots for cells with subtasks
+      let dotsHtml = '';
+      if (hasSubs && active) {
+        const dotItems = subs.map(s => {
+          const sk = subtaskKey(task.id, di, wk, s.id);
+          const ss = checks[sk] || 'none';
+          return `<div class="subtask-dot ${ss === 'done' ? 'done' : ss === 'failed' ? 'failed' : ss === 'late' ? 'late' : ''}"></div>`;
+        }).join('');
+        dotsHtml = `<div class="subtask-dots">${dotItems}</div>`;
+      }
+
+      cell.innerHTML = `<div class="check-mark">${STATUS_SYMBOL[status]}</div>${hasNote ? '<div class="note-marker" title="יש הערה"></div>' : ''}${dotsHtml}`;
+
+      if (active) {
+        attachCellInteraction(cell, task.id, di, wk, hasSubs);
+      }
+      col.appendChild(cell);
+    });
+
+    daysInner.appendChild(col);
+  });
+
+  const scrollEl = document.getElementById('days-scroll');
+  if (!didInitialScroll) {
+    const todayIndex = days.findIndex(d => d.getTime() === today.getTime());
+    if (todayIndex >= 0) {
+      setTimeout(() => {
+        scrollEl.scrollLeft = Math.max(0, (todayIndex - 1) * 52);
+      }, 50);
+    }
+    didInitialScroll = true;
+  } else if (preservedScrollLeft !== null) {
+    scrollEl.scrollLeft = preservedScrollLeft;
+  }
+}
+
+// ─ Compute the auto status of a cell based on its subtask checks ─
+function computeSubtaskStatus(task, dayIndex, wk) {
+  const subs = task.subtasks || [];
+  if (!subs.length) return getStatus(checkKey(task.id, dayIndex, wk));
+  let doneCount = 0, lateCount = 0, failedCount = 0;
+  subs.forEach(s => {
+    const sk = subtaskKey(task.id, dayIndex, wk, s.id);
+    const ss = checks[sk] || 'none';
+    if (ss === 'done') doneCount++;
+    else if (ss === 'late') lateCount++;
+    else if (ss === 'failed') failedCount++;
+  });
+  const total = subs.length;
+  const completedCount = doneCount + lateCount;
+  const noneCount = total - doneCount - lateCount - failedCount;
+
+  if (completedCount === total) {
+    // All completed — if any were late, mark the cell as late
+    return lateCount > 0 ? 'late' : 'done';
+  }
+  if (failedCount === total) return 'failed';
+  if (noneCount === total) return 'none';
+  // Mixed (some done/late, some failed, or some still none)
+  return 'partial';
+}
+
+function renderProgress() {
+  const wk = weekKey(currentSunday);
+  const days = getWeekDays(currentSunday);
+  let total = 0, done = 0, creditSum = 0;
+  tasks.forEach(task => {
+    const hasSubs = (task.subtasks || []).length > 0;
+    days.forEach((_, di) => {
+      if (isTaskActiveOnDay(task, di)) {
+        total++;
+        const status = hasSubs
+          ? computeSubtaskStatus(task, di, wk)
+          : getStatus(checkKey(task.id, di, wk));
+        if (status === 'done' || status === 'late') { done++; creditSum += 1; }
+        else if (status === 'partial') { creditSum += 0.5; }
+      }
+    });
+  });
+  const pct = total ? Math.round(creditSum/total*100) : 0;
+  document.getElementById('stats-done').textContent = `${done} בוצעו`;
+  document.getElementById('stats-total').textContent = `מתוך ${total} אפשריות`;
+  document.getElementById('stats-pct').textContent = `${pct}%`;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+// ─ Update a cell's visual state in-place after subtask changes ─
+function refreshCellFromSubtasks(task, dayIndex, wk) {
+  const status = computeSubtaskStatus(task, dayIndex, wk);
+  const cell = document.querySelector(`.check-cell[data-task="${task.id}"][data-day="${dayIndex}"]`);
+  if (!cell) return;
+  cell.classList.remove('checked', 'partial', 'failed', 'late');
+  if (STATUS_CLASS[status]) cell.classList.add(STATUS_CLASS[status]);
+  cell.querySelector('.check-mark').textContent = STATUS_SYMBOL[status];
+  // Update subtask dots
+  const dotsEl = cell.querySelector('.subtask-dots');
+  if (dotsEl) {
+    dotsEl.querySelectorAll('.subtask-dot').forEach((dot, i) => {
+      const s = (task.subtasks || [])[i];
+      if (!s) return;
+      const ss = checks[subtaskKey(task.id, dayIndex, wk, s.id)] || 'none';
+      dot.className = 'subtask-dot' + (ss === 'done' ? ' done' : ss === 'failed' ? ' failed' : ss === 'late' ? ' late' : '');
+    });
+  }
+  renderProgress();
+}
+
+// ═══════════════════════════════════════════════════════
+// CHECK CYCLE
+// ═══════════════════════════════════════════════════════
+
+function cycleCheck(taskId, dayIndex, wk) {
+  const key = checkKey(taskId, dayIndex, wk);
+  const current = getStatus(key);
+  const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(current) + 1) % STATUS_CYCLE.length];
+
+  if (next === 'none') delete checks[key];
+  else checks[key] = next;
+  save();
+
+  const cell = document.querySelector(`.check-cell[data-task="${taskId}"][data-day="${dayIndex}"]`);
+  if (cell) {
+    cell.classList.remove('checked', 'partial', 'failed', 'late');
+    if (STATUS_CLASS[next]) cell.classList.add(STATUS_CLASS[next]);
+    cell.querySelector('.check-mark').textContent = STATUS_SYMBOL[next];
+  }
+
+  renderProgress();
+  const toastMsg = { none: 'בוטל', done: '✓ בוצע!', partial: '◐ בוצע חלקית', failed: '− לא בוצע', late: '✓ הושלם' }[next];
+  showToast(toastMsg);
+}
+
+// ═══════════════════════════════════════════════════════
+// SUBTASK FLOATING PANEL
+// ═══════════════════════════════════════════════════════
+
+let subtaskPanelTarget = null;
+
+function openSubtaskPanel(task, dayIndex, wk) {
+  subtaskPanelTarget = { task, dayIndex, wk };
+  document.getElementById('subtask-panel-title').textContent = task.name;
+  document.getElementById('subtask-panel-subtitle').textContent = `יום ${DAY_NAMES[dayIndex]}`;
+  renderSubtaskPanel();
+  document.getElementById('subtask-overlay').classList.add('open');
+}
+
+function renderSubtaskPanel() {
+  if (!subtaskPanelTarget) return;
+  const { task, dayIndex, wk } = subtaskPanelTarget;
+  const subs = task.subtasks || [];
+  const rowsEl = document.getElementById('subtask-panel-rows');
+
+  rowsEl.innerHTML = '';
+  subs.forEach(s => {
+    const sk = subtaskKey(task.id, dayIndex, wk, s.id);
+    const ss = checks[sk] || 'none';
+    const row = document.createElement('div');
+    row.className = 'subtask-row';
+    row.innerHTML = `
+      <span class="subtask-name">${s.name}</span>
+      <button class="subtask-btn ${ss}" data-sid="${s.id}">
+        ${ss === 'done' ? '✓' : ss === 'failed' ? '−' : ss === 'late' ? '✓' : ''}
+      </button>
+    `;
+    row.querySelector('.subtask-btn').addEventListener('click', () => {
+      const cur = checks[sk] || 'none';
+      // cycle: none → done → failed → late → none
+      const nxt = cur === 'none' ? 'done' : cur === 'done' ? 'failed' : cur === 'failed' ? 'late' : 'none';
+      if (nxt === 'none') delete checks[sk];
+      else checks[sk] = nxt;
+      save();
+      renderSubtaskPanel();
+      refreshCellFromSubtasks(task, dayIndex, wk);
+    });
+    rowsEl.appendChild(row);
+  });
+}
+
+function closeSubtaskPanel() {
+  document.getElementById('subtask-overlay').classList.remove('open');
+  subtaskPanelTarget = null;
+}
+
+document.getElementById('subtask-panel-close').addEventListener('click', closeSubtaskPanel);
+document.getElementById('subtask-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('subtask-overlay')) closeSubtaskPanel();
+});
+
+// ═══════════════════════════════════════════════════════
+// LONG-PRESS NOTES (hold a cell for 2s to add a short note/reminder)
+// ═══════════════════════════════════════════════════════
+
+const LONG_PRESS_MS = 2000;
+const LONG_PRESS_MOVE_TOLERANCE = 10;
+let noteModalTarget = null;
+
+function attachCellInteraction(cell, taskId, dayIndex, wk, hasSubs) {
+  let pressTimer = null;
+  let longPressFired = false;
+  let startX = 0, startY = 0;
+
+  function clearPressTimer() {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  }
+
+  cell.addEventListener('contextmenu', e => e.preventDefault());
+
+  cell.addEventListener('pointerdown', (e) => {
+    longPressFired = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    clearPressTimer();
+    pressTimer = setTimeout(() => {
+      longPressFired = true;
+      cell.classList.remove('long-press-active');
+      openNoteModal(taskId, dayIndex, wk);
+    }, LONG_PRESS_MS);
+    cell.classList.add('long-press-active');
+  });
+
+  cell.addEventListener('pointermove', (e) => {
+    if (pressTimer && (Math.abs(e.clientX - startX) > LONG_PRESS_MOVE_TOLERANCE || Math.abs(e.clientY - startY) > LONG_PRESS_MOVE_TOLERANCE)) {
+      clearPressTimer();
+      cell.classList.remove('long-press-active');
+    }
+  });
+
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt => {
+    cell.addEventListener(evt, () => {
+      clearPressTimer();
+      cell.classList.remove('long-press-active');
+    });
+  });
+
+  cell.addEventListener('click', () => {
+    if (longPressFired) { longPressFired = false; return; }
+    if (hasSubs) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) openSubtaskPanel(task, dayIndex, wk);
+    } else {
+      cycleCheck(taskId, dayIndex, wk);
+    }
+  });
+}
+
+function openNoteModal(taskId, dayIndex, wk) {
+  noteModalTarget = { taskId, dayIndex, wk, isDayNote: false };
+  const key = checkKey(taskId, dayIndex, wk);
+  const task = tasks.find(t => t.id === taskId);
+  const input = document.getElementById('note-input');
+  input.value = notes[key] || '';
+
+  document.getElementById('note-modal-subtitle').textContent =
+    `${task ? task.name : ''} · יום ${DAY_NAMES[dayIndex]}`;
+  document.getElementById('note-char-count').textContent = `${input.value.length}/40`;
+  document.getElementById('note-delete-btn').style.display = notes[key] ? 'inline-block' : 'none';
+
+  document.getElementById('note-overlay').classList.add('open');
+  setTimeout(() => input.focus(), 100);
+}
+
+function openDayNoteModal(dayIndex, wk) {
+  noteModalTarget = { taskId: null, dayIndex, wk, isDayNote: true };
+  const key = dayNoteKey(dayIndex, wk);
+  const input = document.getElementById('note-input');
+  input.value = notes[key] || '';
+
+  document.getElementById('note-modal-subtitle').textContent =
+    `הערה ליום ${DAY_NAMES[dayIndex]}`;
+  document.getElementById('note-char-count').textContent = `${input.value.length}/40`;
+  document.getElementById('note-delete-btn').style.display = notes[key] ? 'inline-block' : 'none';
+
+  document.getElementById('note-overlay').classList.add('open');
+  setTimeout(() => input.focus(), 100);
+}
+
+function closeNoteModal() {
+  document.getElementById('note-overlay').classList.remove('open');
+  noteModalTarget = null;
+}
+
+function saveNote() {
+  if (!noteModalTarget) return;
+  const { taskId, dayIndex, wk, isDayNote } = noteModalTarget;
+  const text = document.getElementById('note-input').value.trim().slice(0, 40);
+
+  if (isDayNote) {
+    const key = dayNoteKey(dayIndex, wk);
+    if (text) notes[key] = text;
+    else delete notes[key];
+    save();
+    // Update day header marker in-place
+    const headerEl = document.querySelector(`.day-header-cell[data-di="${dayIndex}"]`);
+    if (headerEl) {
+      let marker = headerEl.querySelector('.day-note-marker');
+      if (text && !marker) {
+        marker = document.createElement('div');
+        marker.className = 'day-note-marker';
+        marker.title = 'יש הערה ליום זה';
+        headerEl.appendChild(marker);
+      } else if (!text && marker) {
+        marker.remove();
+      }
+    }
+  } else {
+    const key = checkKey(taskId, dayIndex, wk);
+    if (text) notes[key] = text;
+    else delete notes[key];
+    save();
+    // Update cell marker in-place
+    const cell = document.querySelector(`.check-cell[data-task="${taskId}"][data-day="${dayIndex}"]`);
+    if (cell) {
+      let marker = cell.querySelector('.note-marker');
+      if (text && !marker) {
+        marker = document.createElement('div');
+        marker.className = 'note-marker';
+        marker.title = 'יש הערה';
+        cell.appendChild(marker);
+      } else if (!text && marker) {
+        marker.remove();
+      }
+    }
+  }
+
+  closeNoteModal();
+  showToast(text ? '📝 ההערה נשמרה' : 'ההערה הוסרה');
+}
+
+function deleteNote() {
+  if (!noteModalTarget) return;
+  document.getElementById('note-input').value = '';
+  saveNote();
+}
+
+// Long-press on a day header cell to add/edit a day-level note
+function attachDayHeaderLongPress(headerEl, dayIndex, wk) {
+  let pressTimer = null;
+  let longPressFired = false;
+  let startX = 0, startY = 0;
+
+  headerEl.addEventListener('contextmenu', e => e.preventDefault());
+
+  headerEl.addEventListener('pointerdown', (e) => {
+    longPressFired = false;
+    startX = e.clientX; startY = e.clientY;
+    if (pressTimer) clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => {
+      longPressFired = true;
+      openDayNoteModal(dayIndex, wk);
+    }, 2000);
+    headerEl.style.outline = `2px solid var(--gold)`;
+  });
+
+  headerEl.addEventListener('pointermove', (e) => {
+    if (pressTimer && (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10)) {
+      clearTimeout(pressTimer); pressTimer = null;
+      headerEl.style.outline = '';
+    }
+  });
+
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt => {
+    headerEl.addEventListener(evt, () => {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      headerEl.style.outline = '';
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// DRAG TO REORDER TASKS
+// ═══════════════════════════════════════════════════════
+
+let dragHappened = false;
+let dragState = null;
+
+function attachDragHandlers(rowEl, idx) {
+  const handle = rowEl.querySelector('.drag-handle');
+  handle.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    startDrag(rowEl, idx, e.clientY);
+  });
+}
+
+function startDrag(rowEl, idx, startY) {
+  const taskNamesEl = document.getElementById('task-names');
+  const rows = Array.from(taskNamesEl.children);
+  const rowHeight = rowEl.getBoundingClientRect().height;
+
+  dragState = { fromIdx: idx, toIdx: idx, startY, rowHeight, rows };
+
+  rowEl.classList.add('dragging');
+  rowEl.style.position = 'relative';
+  rowEl.style.zIndex = '50';
+
+  function onMove(e) {
+    if (!dragState) return;
+    dragHappened = true;
+    const deltaY = e.clientY - dragState.startY;
+    rowEl.style.transform = `translateY(${deltaY}px)`;
+
+    const offsetRows = Math.round(deltaY / dragState.rowHeight);
+    let newIdx = dragState.fromIdx + offsetRows;
+    newIdx = Math.max(0, Math.min(rows.length - 1, newIdx));
+    dragState.toIdx = newIdx;
+
+    rows.forEach((r, i) => {
+      if (r === rowEl) return;
+      let shift = 0;
+      if (dragState.fromIdx < newIdx && i > dragState.fromIdx && i <= newIdx) shift = -dragState.rowHeight;
+      else if (dragState.fromIdx > newIdx && i < dragState.fromIdx && i >= newIdx) shift = dragState.rowHeight;
+      r.style.transform = shift ? `translateY(${shift}px)` : '';
+      r.style.transition = 'transform 0.15s';
+    });
+  }
+
+  function onUp() {
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    if (!dragState) return;
+
+    const { fromIdx, toIdx } = dragState;
+
+    rows.forEach(r => {
+      r.style.transform = '';
+      r.style.transition = '';
+      r.style.position = '';
+      r.style.zIndex = '';
+    });
+    rowEl.classList.remove('dragging');
+
+    if (fromIdx !== toIdx) {
+      const moved = tasks.splice(fromIdx, 1)[0];
+      tasks.splice(toIdx, 0, moved);
+      save();
+      render();
+    }
+
+    dragState = null;
+    setTimeout(() => { dragHappened = false; }, 50);
+  }
+
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onUp);
+}
+
+// ═══════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════
+
+
+
+function renderHistory() {
+  const el = document.getElementById('tab-history');
+  if (history.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📜</div><p>עדיין אין שבועות בארכיון.<br>בסיום כל שבוע, הנתונים נשמרים כאן.</p></div>`;
+    return;
+  }
+  el.innerHTML = history.map((h, hi) => {
+    const wk = h.weekKey;
+    let totalH = 0, doneH = 0, creditH = 0;
+    h.tasks.forEach(task => {
+      const hasSubs = (task.subtasks || []).length > 0;
+      [0,1,2,3,4,5,6].forEach(di => {
+        if (isTaskActiveOnDay(task, di)) {
+          totalH++;
+          // Always read from live checks — so back-edits are reflected immediately
+          const status = hasSubs
+            ? computeSubtaskStatus(task, di, wk)
+            : getStatus(checkKey(task.id, di, wk));
+          if (status === 'done' || status === 'late') { doneH++; creditH += 1; }
+          else if (status === 'partial') { creditH += 0.5; }
+        }
+      });
+    });
+    const pctH = totalH ? Math.round(creditH/totalH*100) : 0;
+    return `<div class="history-week">
+      <div class="history-week-header" onclick="toggleHistoryItem(${hi})">
+        <div>
+          <div class="history-parasha">פ' ${h.parasha}</div>
+          <div class="history-dates">${h.dateRange}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="history-stats">${pctH}% ✓</div>
+          <button class="history-delete-btn" onclick="event.stopPropagation(); deleteHistoryWeek(${hi})" title="מחק שבוע מההיסטוריה">🗑</button>
+        </div>
+      </div>
+      <div class="history-body" id="hist-${hi}">
+        ${h.tasks.map(task => {
+          const hasSubs = (task.subtasks || []).length > 0;
+          const dayChecks = [0,1,2,3,4,5,6].map(di => ({
+            active: isTaskActiveOnDay(task, di),
+            status: hasSubs
+              ? computeSubtaskStatus(task, di, wk)
+              : getStatus(checkKey(task.id, di, wk))
+          }));
+          return `<div class="history-task-row">
+            <span style="display:flex;align-items:center;gap:6px">
+              <span style="width:7px;height:7px;border-radius:50%;background:${task.color};display:inline-block"></span>
+              ${task.name}
+            </span>
+            <div class="history-checks">
+              ${dayChecks.map(c => `<div class="history-check-dot ${STATUS_CLASS[c.status]}${!c.active?' disabled':''}"></div>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteHistoryWeek(i) {
+  const entry = history[i];
+  if (!entry) return;
+  showConfirm(`למחוק את השבוע "${entry.parasha}" מההיסטוריה? לא ניתן לשחזר.`, () => {
+    history.splice(i, 1);
+    save();
+    renderHistory();
+    showToast('השבוע נמחק מההיסטוריה');
+  });
+}
+
+function toggleHistoryItem(i) {
+  const el = document.getElementById('hist-' + i);
+  el.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════
+// CUSTOM CONFIRM DIALOG (native confirm() is blocked in some webviews)
+// ═══════════════════════════════════════════════════════
+
+function showConfirm(message, onConfirm, confirmLabel) {
+  const overlay = document.getElementById('confirm-overlay');
+  document.getElementById('confirm-message').textContent = message;
+  overlay.classList.add('open');
+
+  const yesBtn = document.getElementById('confirm-yes');
+  const noBtn = document.getElementById('confirm-no');
+  yesBtn.textContent = confirmLabel || 'מחק';
+
+  function cleanup() {
+    overlay.classList.remove('open');
+    yesBtn.removeEventListener('click', onYes);
+    noBtn.removeEventListener('click', onNo);
+    overlay.removeEventListener('click', onOverlayClick);
+  }
+  function onYes() { cleanup(); onConfirm(); }
+  function onNo() { cleanup(); }
+  function onOverlayClick(e) { if (e.target === overlay) cleanup(); }
+
+  yesBtn.addEventListener('click', onYes);
+  noBtn.addEventListener('click', onNo);
+  overlay.addEventListener('click', onOverlayClick);
+}
+
+document.getElementById('note-input').addEventListener('input', (e) => {
+  document.getElementById('note-char-count').textContent = `${e.target.value.length}/40`;
+});
+document.getElementById('note-save-btn').addEventListener('click', saveNote);
+document.getElementById('note-delete-btn').addEventListener('click', deleteNote);
+document.getElementById('note-cancel-btn').addEventListener('click', closeNoteModal);
+document.getElementById('note-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('note-overlay')) closeNoteModal();
+});
+
+// ═══════════════════════════════════════════════════════
+// MODAL: ADD/EDIT TASK
+// ═══════════════════════════════════════════════════════
+
+let modalDays = [0,1,2,3,4,5,6];
+let modalColor = COLORS[0];
+let modalTimeMode = 'allday';
+let modalPerDayTimes = {};
+let modalSubtasks = []; // [{id, name}, ...]
+let modalReminder = { enabled: false, days: [], leadMinutes: 0 };
+
+function getModalActiveDays() {
+  return [...modalDays].sort();
+}
+
+function openAddModal() {
+  editingTaskId = null;
+  modalDays = [0,1,2,3,4,5,6];
+  modalColor = COLORS[0];
+  modalTimeMode = 'allday';
+  modalPerDayTimes = {};
+  modalSubtasks = [];
+  modalReminder = { enabled: false, days: [0,1,2,3,4,5,6], leadMinutes: 0 };
+  document.getElementById('task-name-input').value = '';
+  document.getElementById('task-time-input').value = '';
+  document.getElementById('modal-title').textContent = 'משימה חדשה';
+  document.getElementById('modal-actions').innerHTML = `
+    <button class="btn-save" id="btn-save">שמור</button>
+    <button class="btn-cancel" id="btn-cancel">ביטול</button>
+  `;
+  syncModalUI();
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('btn-save').addEventListener('click', saveTask);
+  document.getElementById('btn-cancel').addEventListener('click', closeModal);
+}
+
+function openEditModal(task) {
+  editingTaskId = task.id;
+  if (task.freq === 'daily') modalDays = [0,1,2,3,4,5,6];
+  else if (task.freq === 'weekly') modalDays = [6];
+  else modalDays = task.days ? [...task.days] : [];
+  modalColor = task.color || COLORS[0];
+  modalTimeMode = task.timeMode || 'allday';
+  modalPerDayTimes = task.times ? { ...task.times } : {};
+  modalSubtasks = task.subtasks ? task.subtasks.map(s => ({ ...s })) : [];
+  modalReminder = task.reminder
+    ? { enabled: !!task.reminder.enabled, days: [...(task.reminder.days || modalDays)], leadMinutes: task.reminder.leadMinutes || 0 }
+    : { enabled: false, days: [...modalDays], leadMinutes: 0 };
+  document.getElementById('task-name-input').value = task.name;
+  document.getElementById('task-time-input').value = task.time || '';
+  document.getElementById('modal-title').textContent = 'עריכת משימה';
+  document.getElementById('modal-actions').innerHTML = `
+    <button class="btn-save" id="btn-save">שמור</button>
+    <button class="btn-delete" id="btn-delete">מחק</button>
+    <button class="btn-cancel" id="btn-cancel">ביטול</button>
+  `;
+  syncModalUI();
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('btn-save').addEventListener('click', saveTask);
+  document.getElementById('btn-cancel').addEventListener('click', closeModal);
+  document.getElementById('btn-delete').addEventListener('click', deleteTask);
+}
+
+function renderPerDayTimes() {
+  const container = document.getElementById('per-day-times');
+  const activeDays = getModalActiveDays();
+  container.innerHTML = activeDays.map(d => `
+    <div class="per-day-time-row">
+      <span class="per-day-time-label">${DAY_SHORT[d]}</span>
+      <input type="time" data-pd-day="${d}" value="${modalPerDayTimes[d] || ''}">
+    </div>
+  `).join('');
+  container.querySelectorAll('input[type="time"]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      modalPerDayTimes[+inp.dataset.pdDay] = inp.value;
+    });
+  });
+}
+
+function renderSubtaskEditList() {
+  const list = document.getElementById('subtask-edit-list');
+  list.innerHTML = '';
+  modalSubtasks.forEach((s, idx) => {
+    const row = document.createElement('div');
+    row.className = 'subtask-edit-row';
+    row.innerHTML = `
+      <input class="subtask-edit-input" type="text" maxlength="30"
+        value="${s.name}" placeholder="שם תת-משימה" data-idx="${idx}">
+      <button class="subtask-delete-btn" data-idx="${idx}" title="מחק">✕</button>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.subtask-edit-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      modalSubtasks[+inp.dataset.idx].name = inp.value;
+    });
+  });
+  list.querySelectorAll('.subtask-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modalSubtasks.splice(+btn.dataset.idx, 1);
+      renderSubtaskEditList();
+      updateSubtaskAddBtn();
+    });
+  });
+  updateSubtaskAddBtn();
+}
+
+function updateSubtaskAddBtn() {
+  const btn = document.getElementById('subtask-add-btn');
+  const hint = document.getElementById('subtask-count-hint');
+  const max = 6;
+  btn.style.display = modalSubtasks.length >= max ? 'none' : 'block';
+  hint.textContent = `${modalSubtasks.length}/${max}`;
+}
+
+function syncModalUI() {
+  document.querySelectorAll('#days-picker .day-chip[data-day]').forEach(c => {
+    c.classList.toggle('selected', modalDays.includes(+c.dataset.day));
+  });
+  document.getElementById('select-all-days').classList.toggle('selected', modalDays.length === 7);
+
+  document.querySelectorAll('.color-swatch').forEach(s => {
+    s.classList.toggle('selected', s.dataset.color === modalColor);
+  });
+
+  document.querySelectorAll('.time-toggle-btn[data-time]').forEach(b => {
+    b.classList.toggle('selected', b.dataset.time === modalTimeMode);
+  });
+  document.getElementById('task-time-input').style.display = modalTimeMode === 'sameTime' ? 'block' : 'none';
+  document.getElementById('per-day-times').style.display = modalTimeMode === 'perDay' ? 'block' : 'none';
+  if (modalTimeMode === 'perDay') renderPerDayTimes();
+
+  renderSubtaskEditList();
+
+  // Reminder section: always visible, but disabled with explanation when no time is set
+  const hasTime = modalTimeMode !== 'allday';
+  document.getElementById('reminder-group').style.display = 'block';
+  document.getElementById('reminder-no-time-msg').style.display = hasTime ? 'none' : 'block';
+  document.getElementById('reminder-controls').style.display = hasTime ? 'block' : 'none';
+  if (hasTime) {
+    syncReminderUI();
+    updatePermissionIndicator();
+  }
+}
+
+function updatePermissionIndicator() {
+  const el = document.getElementById('permission-indicator');
+  const txt = document.getElementById('permission-text');
+  // In Android APK, permissions are handled natively — always show as granted
+  if (isAndroidApp()) {
+    el.className = 'permission-indicator granted'; txt.textContent = 'מאושר ✓'; return;
+  }
+  if (typeof Notification === 'undefined') {
+    el.className = 'permission-indicator denied'; txt.textContent = 'לא נתמך'; return;
+  }
+  if (Notification.permission === 'granted') {
+    el.className = 'permission-indicator granted'; txt.textContent = 'מאושר ✓';
+  } else if (Notification.permission === 'denied') {
+    el.className = 'permission-indicator denied'; txt.textContent = 'חסום — יש לאפשר בדפדפן';
+  } else {
+    el.className = 'permission-indicator unknown'; txt.textContent = 'לא הוחלט';
+  }
+}
+
+function syncReminderUI() {
+  const sw = document.getElementById('reminder-switch');
+  const details = document.getElementById('reminder-details');
+  sw.classList.toggle('on', modalReminder.enabled);
+  details.style.display = modalReminder.enabled ? 'block' : 'none';
+  const activeDays = getModalActiveDays();
+  document.querySelectorAll('#reminder-days-picker .day-chip[data-rday]').forEach(c => {
+    const d = +c.dataset.rday;
+    c.style.display = activeDays.includes(d) ? '' : 'none';
+    c.classList.toggle('selected', modalReminder.days.includes(d));
+  });
+  const allSel = activeDays.length > 0 && activeDays.every(d => modalReminder.days.includes(d));
+  document.getElementById('select-all-reminder-days').classList.toggle('selected', allSel);
+  document.getElementById('reminder-lead-select').value = String(modalReminder.leadMinutes);
+}
+
+document.getElementById('reminder-switch').addEventListener('click', () => {
+  // In Android APK — permissions handled natively, just toggle
+  if (isAndroidApp()) {
+    modalReminder.enabled = !modalReminder.enabled;
+    if (modalReminder.enabled && modalReminder.days.length === 0) modalReminder.days = [...getModalActiveDays()];
+    syncReminderUI();
+    return;
+  }
+
+  const perm = typeof Notification !== 'undefined' ? Notification.permission : 'denied';
+  if (!modalReminder.enabled && perm === 'default') {
+    Notification.requestPermission().then(result => {
+      updatePermissionIndicator();
+      if (result === 'granted') {
+        modalReminder.enabled = true;
+        if (modalReminder.days.length === 0) modalReminder.days = [...getModalActiveDays()];
+        syncReminderUI();
+      }
+    });
+    return;
+  }
+  modalReminder.enabled = !modalReminder.enabled;
+  if (modalReminder.enabled && modalReminder.days.length === 0) modalReminder.days = [...getModalActiveDays()];
+  syncReminderUI();
+  if (modalReminder.enabled && perm === 'denied') {
+    showToast('יש לאפשר התראות בהגדרות הדפדפן / האתר');
+  }
+});
+
+document.querySelectorAll('#reminder-days-picker .day-chip[data-rday]').forEach(c => {
+  c.addEventListener('click', () => {
+    const d = +c.dataset.rday;
+    if (modalReminder.days.includes(d)) modalReminder.days = modalReminder.days.filter(x => x !== d);
+    else modalReminder.days.push(d);
+    syncReminderUI();
+  });
+});
+
+document.getElementById('select-all-reminder-days').addEventListener('click', () => {
+  const active = getModalActiveDays();
+  const allSel = active.length > 0 && active.every(d => modalReminder.days.includes(d));
+  modalReminder.days = allSel ? [] : [...active];
+  syncReminderUI();
+});
+
+document.getElementById('reminder-lead-select').addEventListener('change', e => {
+  modalReminder.leadMinutes = parseInt(e.target.value, 10) || 0;
+});
+
+document.getElementById('test-reminder-btn').addEventListener('click', () => {
+  // In Android APK — use native bridge directly
+  if (isAndroidApp()) {
+    try {
+      window.AndroidBridge.showNotification('🔔 בדיקת תזכורת', 'ההתראות עובדות תקין באפליקציה.');
+      showToast('נשלחה התראת בדיקה ✓');
+    } catch(e) { showToast('שגיאה: ' + e.message); }
+    return;
+  }
+  if (typeof Notification === 'undefined') { showToast('הדפדפן לא תומך בהתראות'); return; }
+  if (Notification.permission === 'denied') {
+    showToast('יש לאפשר התראות: לחץ על 🔒 ליד שורת הכתובת → התראות → אפשר');
+    return;
+  }
+  if (Notification.permission !== 'granted') {
+    Notification.requestPermission().then(perm => {
+      updatePermissionIndicator();
+      if (perm === 'granted') fireTestNotification();
+      else showToast('ההרשאה לא אושרה');
+    });
+    return;
+  }
+  fireTestNotification();
+});
+
+// ─ Detect if running inside the Android APK ─
+function isAndroidApp() {
+  try { return !!(window.AndroidBridge && window.AndroidBridge.isAndroidApp()); }
+  catch(e) { return false; }
+}
+
+// ─ Sync all reminder-enabled tasks with Android's AlarmManager ─
+// Called after every task save and on page load.
+function syncRemindersWithAndroid() {
+  if (!isAndroidApp()) return;
+  try {
+    const reminderTasks = tasks
+      .filter(t => t.reminder && t.reminder.enabled && t.timeMode !== 'allday')
+      .map(t => ({
+        id: String(t.id),
+        name: t.name,
+        days: t.reminder.days || [],
+        leadMinutes: t.reminder.leadMinutes || 0,
+        timeMode: t.timeMode,
+        time: t.time || '',
+        times: t.times || {}
+      }));
+    window.AndroidBridge.syncReminders(JSON.stringify(reminderTasks));
+  } catch(e) { /* ignore bridge errors */ }
+}
+
+// Shows notification via Android native (APK) or Service Worker (browser).
+async function showReminderNotification(title, body) {
+  // Android APK: use native notification bridge
+  if (isAndroidApp()) {
+    try { window.AndroidBridge.showNotification(title, body); return; }
+    catch(e) { /* fall through */ }
+  }
+  // Browser: use Service Worker (required on Android Chrome)
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, {
+        body, icon: 'icon.svg', badge: 'icon-192.png', silent: false,
+        actions: [{ action: 'dismiss', title: 'אישור' }]
+      });
+      return;
+    } catch(e) { /* fall through */ }
+  }
+  // Desktop fallback
+  try { new Notification(title, { body, icon: 'icon.svg', silent: false }); }
+  catch(e) { /* ignore */ }
+}
+
+function fireTestNotification() {
+  showReminderNotification('🔔 בדיקת תזכורת', 'ההתראות עובדות תקין במכשיר שלך.');
+  showToast('נשלחה התראת בדיקה ✓');
+  updatePermissionIndicator();
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function saveTask() {
+  const name = document.getElementById('task-name-input').value.trim();
+  if (!name) { showToast('נא להזין שם למשימה'); return; }
+  if (modalDays.length === 0) { showToast('יש לבחור לפחות יום אחד'); return; }
+
+  const activeDays = getModalActiveDays();
+  // Filter out empty subtask names, keep only named ones
+  const validSubtasks = modalSubtasks
+    .filter(s => s.name.trim())
+    .map(s => ({ id: s.id, name: s.name.trim() }));
+
+  const taskData = {
+    name,
+    freq: 'custom',
+    days: [...modalDays],
+    color: modalColor,
+    timeMode: modalTimeMode,
+    time: modalTimeMode === 'sameTime' ? document.getElementById('task-time-input').value : '',
+    times: modalTimeMode === 'perDay'
+      ? Object.fromEntries(activeDays.filter(d => modalPerDayTimes[d]).map(d => [d, modalPerDayTimes[d]]))
+      : {},
+    subtasks: validSubtasks,
+    reminder: modalTimeMode === 'allday'
+      ? { enabled: false, days: [], leadMinutes: 0 }
+      : { enabled: modalReminder.enabled, days: [...modalReminder.days], leadMinutes: modalReminder.leadMinutes }
+  };
+
+  if (editingTaskId) {
+    const idx = tasks.findIndex(t => t.id === editingTaskId);
+    if (idx >= 0) tasks[idx] = { ...tasks[idx], ...taskData };
+  } else {
+    taskData.id = Date.now();
+    tasks.push(taskData);
+  }
+  save();
+  closeModal();
+  render();
+  syncRemindersWithAndroid();
+  showToast(editingTaskId ? 'המשימה עודכנה' : 'המשימה נוספה ✓');
+}
+
+function deleteTask() {
+  if (!editingTaskId) return;
+  tasks = tasks.filter(t => t.id !== editingTaskId);
+  save();
+  closeModal();
+  render();
+  showToast('המשימה נמחקה');
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ═══════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════
+
+function initTheme() {
+  const saved = localStorage.getItem('shabbat-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.getElementById('theme-toggle').textContent = saved === 'dark' ? '☀️' : '🌙';
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('shabbat-theme', next);
+  document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+});
+
+// ═══════════════════════════════════════════════════════
+// PAGE ZOOM
+// ═══════════════════════════════════════════════════════
+
+const ZOOM_DEFAULT = 0.83; // physical default — displays as 90%
+const ZOOM_MIN = 0.73;     // displays as 80%
+const ZOOM_MAX = 0.93;     // displays as 100%
+const ZOOM_STEP = 0.02;    // each button press = 2% display change
+
+// Clamp any previously-saved value to the new range
+let zoomLevel = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN,
+  parseFloat(localStorage.getItem('shabbat-zoom')) || ZOOM_DEFAULT
+));
+
+function displayPct(z) {
+  // Centers on default: 0.83 → 90, every 0.02 → 2%
+  return Math.round((z - ZOOM_DEFAULT) * 100) + 90;
+}
+
+function applyZoom() {
+  // Fixed sections (header, tabs, progress, add-task button) always render at
+  // the default physical size so the layout is stable — achieved by keeping
+  // body zoom pinned at the default value.
+  document.body.style.zoom = ZOOM_DEFAULT;
+
+  // Only the grid zooms — relatively to the fixed body zoom so the real
+  // physical scale matches the requested zoomLevel.
+  // e.g. zoomLevel=0.73: grid.zoom = 0.73/0.83 ≈ 0.88 → 0.83*0.88 = 0.73 ✓
+  //      zoomLevel=0.83: grid.zoom = 1.00          → 0.83*1.00 = 0.83 ✓
+  //      zoomLevel=0.93: grid.zoom = 1.12          → 0.83*1.12 = 0.93 ✓
+  const grid = document.getElementById('grid-container');
+  if (grid) grid.style.zoom = (zoomLevel / ZOOM_DEFAULT).toFixed(4);
+  localStorage.setItem('shabbat-zoom', zoomLevel);
+}
+
+document.getElementById('zoom-in').addEventListener('click', () => {
+  zoomLevel = Math.min(ZOOM_MAX, Math.round((zoomLevel + ZOOM_STEP) * 100) / 100);
+  applyZoom();
+  showToast(`תצוגה: ${displayPct(zoomLevel)}%`);
+});
+
+document.getElementById('zoom-out').addEventListener('click', () => {
+  zoomLevel = Math.max(ZOOM_MIN, Math.round((zoomLevel - ZOOM_STEP) * 100) / 100);
+  applyZoom();
+  showToast(`תצוגה: ${displayPct(zoomLevel)}%`);
+});
+
+// ═══════════════════════════════════════════════════════
+// WHATSAPP SHARE
+// ═══════════════════════════════════════════════════════
+
+const STATUS_EMOJI = { done: '✅', partial: '🟡', failed: '🔴', late: '🟣', none: '⚪' };
+
+function buildWeekSummaryText() {
+  const wk = weekKey(currentSunday);
+  const parasha = document.getElementById('parasha-name').textContent;
+  const dateRange = document.getElementById('hebrew-date-range').textContent;
+
+  let lines = [];
+  lines.push(`*סיכום שבועי – פרשת ${parasha}*`);
+  lines.push(dateRange);
+  lines.push('');
+
+  let total = 0, creditSum = 0;
+  const noteLines = [];
+  const partialSubtaskLines = [];
+
+  tasks.forEach(task => {
+    const hasSubs = (task.subtasks || []).length > 0;
+    const dayMarks = [];
+    let activeCount = 0;
+    for (let di = 0; di < 7; di++) {
+      if (!isTaskActiveOnDay(task, di)) { dayMarks.push('⬛'); continue; }
+      activeCount++;
+      total++;
+      const key = checkKey(task.id, di, wk);
+      const status = hasSubs ? computeSubtaskStatus(task, di, wk) : getStatus(key);
+      if (status === 'done' || status === 'late') creditSum += 1;
+      else if (status === 'partial') creditSum += 0.5;
+      dayMarks.push(STATUS_EMOJI[status]);
+
+      // Collect task-cell notes
+      if (notes[key]) {
+        noteLines.push(`${task.name} (${DAY_SHORT[di]}): ${notes[key]}`);
+      }
+
+      // Collect subtask breakdown for partial days only
+      if (hasSubs && status === 'partial') {
+        const subDetail = task.subtasks.map(s => {
+          const sk = subtaskKey(task.id, di, wk, s.id);
+          const ss = checks[sk] || 'none';
+          // \u00A0 = non-breaking space — keeps name+emoji together as one unit
+          return `${s.name}\u00A0${ss === 'done' ? '✅' : ss === 'late' ? '🟣' : ss === 'failed' ? '🔴' : '⚪'}`;
+        }).join('   ');
+        partialSubtaskLines.push(`${task.name} — ${DAY_SHORT[di]}: ${subDetail}`);
+      }
+    }
+    if (activeCount === 0) return;
+    lines.push(`${task.name}`);
+    lines.push(`${dayMarks.join(' ')}`);
+  });
+
+  const pct = total ? Math.round(creditSum / total * 100) : 0;
+  lines.push('');
+  lines.push(`התקדמות כללית: ${pct}%`);
+  lines.push('');
+  lines.push('✅בוצע 🟡בוצע חלקי 🔴לא בוצע 🟣הושלם');
+
+  // Partial subtask breakdown (only when there are partial days)
+  if (partialSubtaskLines.length > 0) {
+    lines.push('');
+    lines.push('🟡 ביצוע חלקי:');
+    partialSubtaskLines.forEach(l => lines.push(l));
+  }
+
+  // Day-level notes, then task notes
+  const dayNoteLines = [];
+  for (let di = 0; di < 7; di++) {
+    const key = dayNoteKey(di, wk);
+    if (notes[key]) {
+      dayNoteLines.push(`יום ${DAY_NAMES[di]}: ${notes[key]}`);
+    }
+  }
+
+  const allNotes = [...dayNoteLines, ...noteLines];
+  if (allNotes.length > 0) {
+    lines.push('');
+    lines.push('📝 הערות:');
+    allNotes.forEach(n => lines.push(n));
+  }
+
+  return lines.join('\n');
+}
+
+document.getElementById('whatsapp-share').addEventListener('click', () => {
+  const text = buildWeekSummaryText();
+  const url = 'https://wa.me/?text=' + encodeURIComponent(text);
+  window.open(url, '_blank');
+});
+
+// ═══════════════════════════════════════════════════════
+// RESET TO DEFAULTS
+// ═══════════════════════════════════════════════════════
+
+document.getElementById('reset-app-btn').addEventListener('click', () => {
+  showConfirm(
+    'לאפס את האפליקציה לברירת המחדל? כל המשימות, הסימונים, ההיסטוריה וההערות שלך יימחקו לצמיתות ולא ניתן לשחזר אותם.',
+    () => {
+      localStorage.removeItem('shabbat-tasks');
+      localStorage.removeItem('shabbat-checks');
+      localStorage.removeItem('shabbat-history');
+      localStorage.removeItem('shabbat-notes');
+      localStorage.removeItem('shabbat-theme');
+      localStorage.removeItem('shabbat-zoom');
+      localStorage.removeItem('shabbat-fired-reminders');
+      location.reload();
+    },
+    'אפס'
+  );
+});
+
+// ═══════════════════════════════════════════════════════
+// WEEK NAVIGATION
+// ═══════════════════════════════════════════════════════
+
+// Creates or refreshes a history entry for a past week.
+// Called whenever we navigate TO a past week (not current, not future).
+// Uses live checks for display — only the metadata (parasha, dates, task list) is stored.
+function ensureHistoryEntry(sunday) {
+  const realSunday = getSundayOfWeek(new Date());
+  if (dateKey(sunday) >= dateKey(realSunday)) return; // never archive current or future week
+
+  const wk = weekKey(sunday);
+  const days = getWeekDays(sunday);
+  const hdSun = HEB.toHebrew(days[0]);
+  const hdSat = HEB.toHebrew(days[6]);
+
+  const entry = {
+    weekKey: wk,
+    parasha: getParasha(sunday),
+    dateRange: HEB.formatDate(hdSun) + ' - ' + HEB.formatDate(hdSat) + ', ' + HEB.yearStr(hdSun.year),
+    tasks: tasks.map(t => ({...t})), // snapshot of current task list (names/colors)
+  };
+
+  const existingIdx = history.findIndex(h => h.weekKey === wk);
+  if (existingIdx >= 0) {
+    // Refresh task snapshot in case tasks were renamed/recolored, but keep weekKey/dates
+    history[existingIdx] = { ...history[existingIdx], tasks: entry.tasks };
+  } else {
+    history.push(entry);
+  }
+
+  // Keep history in chronological order (newest first) by weekKey
+  history.sort((a, b) => b.weekKey.localeCompare(a.weekKey));
+  save();
+}
+
+document.getElementById('prev-week').addEventListener('click', () => {
+  currentSunday = new Date(currentSunday);
+  currentSunday.setDate(currentSunday.getDate() - 7);
+  ensureHistoryEntry(currentSunday); // archive past weeks as we navigate back
+  render();
+});
+
+document.getElementById('next-week').addEventListener('click', () => {
+  currentSunday = new Date(currentSunday);
+  currentSunday.setDate(currentSunday.getDate() + 7);
+  // no archiving for forward navigation
+  render();
+});
+
+// ═══════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const name = tab.dataset.tab;
+    document.getElementById('tab-current').style.display = name === 'current' ? 'block' : 'none';
+    document.getElementById('tab-history').style.display = name === 'history' ? 'block' : 'none';
+    if (name === 'history') renderHistory();
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+// ADD TASK + MODAL INTERACTIONS
+// ═══════════════════════════════════════════════════════
+
+document.getElementById('add-task-btn').addEventListener('click', openAddModal);
+
+document.getElementById('subtask-add-btn').addEventListener('click', () => {
+  if (modalSubtasks.length >= 6) return;
+  modalSubtasks.push({ id: Date.now() + Math.random(), name: '' });
+  renderSubtaskEditList();
+  // Focus the new input
+  const inputs = document.querySelectorAll('.subtask-edit-input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+});
+
+document.querySelectorAll('#days-picker .day-chip[data-day]').forEach(c => {
+  c.addEventListener('click', () => {
+    const d = +c.dataset.day;
+    if (modalDays.includes(d)) modalDays = modalDays.filter(x => x !== d);
+    else modalDays.push(d);
+    syncModalUI();
+  });
+});
+
+document.getElementById('select-all-days').addEventListener('click', () => {
+  modalDays = modalDays.length === 7 ? [] : [0,1,2,3,4,5,6];
+  syncModalUI();
+});
+
+document.querySelectorAll('.color-swatch').forEach(s => {
+  s.addEventListener('click', () => {
+    modalColor = s.dataset.color;
+    syncModalUI();
+  });
+});
+
+document.querySelectorAll('.time-toggle-btn[data-time]').forEach(b => {
+  b.addEventListener('click', () => {
+    modalTimeMode = b.dataset.time;
+    syncModalUI();
+  });
+});
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+// ═══════════════════════════════════════════════════════
+// AUTO-ARCHIVE CHECK (runs on load)
+// ═══════════════════════════════════════════════════════
+
+function checkAutoArchive() {
+  const lastSunday = getSundayOfWeek(new Date());
+  const lastKey = dateKey(lastSunday);
+  const prevSunday = new Date(lastSunday);
+  prevSunday.setDate(prevSunday.getDate() - 7);
+  const prevKey = dateKey(prevSunday);
+  if (!history.find(h => h.weekKey === prevKey)) {
+    const prevTasks = tasks.map(t => ({...t}));
+    if (prevTasks.length > 0) {
+      const days = getWeekDays(prevSunday);
+      const hdSun = HEB.toHebrew(days[0]);
+      const hdSat = HEB.toHebrew(days[6]);
+      const entry = {
+        weekKey: prevKey,
+        parasha: getParasha(prevSunday),
+        dateRange: HEB.formatDate(hdSun) + ' - ' + HEB.formatDate(hdSat) + ', ' + HEB.yearStr(hdSun.year),
+        tasks: prevTasks,
+        checks: Object.fromEntries(Object.entries(checks).filter(([k]) => k.startsWith(prevKey)))
+      };
+      if (entry.tasks.length > 0 && Object.keys(entry.checks).length > 0) {
+        history.unshift(entry);
+        save();
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// REMINDER ENGINE
+// Checks every 20 seconds if any reminder is due.
+// Works while the app/tab is open (including in the background).
+// ═══════════════════════════════════════════════════════
+
+let firedReminders = JSON.parse(localStorage.getItem('shabbat-fired-reminders') || '{}');
+
+function pruneFiredReminders(todayKey) {
+  for (const k of Object.keys(firedReminders)) {
+    if (k !== todayKey) delete firedReminders[k];
+  }
+}
+
+function getTaskTimeForDay(task, dayIndex) {
+  if (task.timeMode === 'sameTime') return task.time || '';
+  if (task.timeMode === 'perDay') return (task.times && task.times[dayIndex]) || '';
+  return '';
+}
+
+function checkReminders() {
+  // In Android APK — AlarmManager handles reminders natively, no need to poll
+  if (isAndroidApp()) return;
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  const now = new Date();
+  const todayKey = dateKey(now);
+  pruneFiredReminders(todayKey);
+  if (!firedReminders[todayKey]) firedReminders[todayKey] = {};
+
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const dayIndex = now.getDay();
+
+  tasks.forEach(task => {
+    if (!task.reminder || !task.reminder.enabled) return;
+    if (!Array.isArray(task.reminder.days) || !task.reminder.days.includes(dayIndex)) return;
+    const time = getTaskTimeForDay(task, dayIndex);
+    if (!time) return;
+
+    const [th, tm] = time.split(':').map(Number);
+    const taskMinutes = th * 60 + tm;
+    const lead = task.reminder.leadMinutes || 0;
+    const triggerMinutes = ((taskMinutes - lead) % 1440 + 1440) % 1440;
+    if (triggerMinutes !== nowMinutes) return;
+
+    const fireKey = `t${task.id}-d${dayIndex}-${time}-l${lead}`;
+    if (firedReminders[todayKey][fireKey]) return;
+    firedReminders[todayKey][fireKey] = true;
+    localStorage.setItem('shabbat-fired-reminders', JSON.stringify(firedReminders));
+
+    const body = lead > 0
+      ? `${task.name} מתחילה בשעה ${time} (בעוד ${lead} דקות)`
+      : `השעה ${time} — הגיע הזמן ל${task.name}`;
+    try {
+      showReminderNotification('🔔 ' + task.name, body);
+    } catch(e) { /* ignore */ }
+  });
+}
+
+function startReminderEngine() {
+  if (isAndroidApp()) {
+    // In APK: Android's AlarmManager handles reminders natively.
+    // Sync current reminder configs to Android on every page load.
+    syncRemindersWithAndroid();
+    return;
+  }
+  // In browser: poll every 20 seconds
+  checkReminders();
+  setInterval(checkReminders, 20000);
+}
+
+function init() {
+  initTheme();
+  applyZoom();
+  checkAutoArchive();
+
+  const defaultPrayerSubs = () => [
+    { id: Date.now() + Math.random(), name: 'תפילה' },
+    { id: Date.now() + Math.random() + 1, name: 'במניין' }
+  ];
+
+  if (tasks.length === 0) {
+    const allDays = [0,1,2,3,4,5,6];
+    const defaults = () => ({ timeMode: 'allday', time: '', times: {}, subtasks: [] });
+    tasks = [
+      { id: 1, name: 'תפילת שחרית',            freq: 'custom', days: [...allDays], color: '#8b4513', ...defaults(), subtasks: defaultPrayerSubs() },
+      { id: 2, name: 'תפילת מנחה',             freq: 'custom', days: [...allDays], color: '#4a7c59', ...defaults(), subtasks: defaultPrayerSubs() },
+      { id: 3, name: 'תפילת ערבית',            freq: 'custom', days: [...allDays], color: '#1a6ba0', ...defaults(), subtasks: defaultPrayerSubs() },
+      { id: 4, name: 'חומש יומי',               freq: 'custom', days: [...allDays], color: '#7b3f8c', ...defaults() },
+      { id: 5, name: 'תהילים יומי',             freq: 'custom', days: [...allDays], color: '#c0703a', ...defaults() },
+      { id: 6, name: 'תניא יומי',               freq: 'custom', days: [...allDays], color: '#c9a84c', ...defaults() },
+      { id: 7, name: 'היום יום',                freq: 'custom', days: [...allDays], color: '#2d7d9a', ...defaults() },
+      { id: 8, name: 'רמב"ם יומי',              freq: 'custom', days: [...allDays], color: '#a0522d', ...defaults(), subtasks: [{ id: Date.now()+7, name: 'פרק 1' }, { id: Date.now()+8, name: 'פרק 2' }, { id: Date.now()+9, name: 'פרק 3' }] },
+      { id: 9, name: 'קריאת שמע שעל המיטה',     freq: 'custom', days: [...allDays], color: '#8b4513', ...defaults() },
+      { id: 10, name: 'שניים מקרא ואחד תרגום', freq: 'custom', days: [5],          color: '#4a7c59', ...defaults() },
+    ];
+    save();
+  } else {
+    // Migration: add default prayer subtasks to existing prayer tasks that don't have any yet
+    let migrated = false;
+    const prayerNames = ['תפילת שחרית', 'תפילת מנחה', 'תפילת ערבית'];
+    tasks.forEach(task => {
+      if (prayerNames.includes(task.name) && (!task.subtasks || task.subtasks.length === 0)) {
+        task.subtasks = defaultPrayerSubs();
+        migrated = true;
+      }
+      if (task.name === 'רמב"ם יומי' && (!task.subtasks || task.subtasks.length === 0)) {
+        task.subtasks = [
+          { id: Date.now() + Math.random(), name: 'פרק 1' },
+          { id: Date.now() + Math.random() + 1, name: 'פרק 2' },
+          { id: Date.now() + Math.random() + 2, name: 'פרק 3' }
+        ];
+        migrated = true;
+      }
+    });
+    if (migrated) save();
+  }
+
+  render();
+  document.getElementById('tab-current').style.display = 'block';
+  document.getElementById('tab-history').style.display = 'none';
+  startReminderEngine();
+}
+
+init();
+
+// ═══════════════════════════════════════════════════════
+// PWA: register the service worker (enables installability +
+// basic offline support). Only works when served over HTTPS
+// (or localhost) — not when opened directly as a local file.
+// ═══════════════════════════════════════════════════════
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// PWA INSTALL BUTTON
+//
+// The install button lives in the header and:
+// • Is hidden when the app is already running standalone (installed).
+// • On Android/Chrome: shows immediately and triggers the native install
+//   dialog when tapped.
+// • On iOS Safari: shows instructions explaining Share → Add to Home Screen.
+// • In in-app browsers (WhatsApp, Telegram, Instagram etc.): detects that
+//   no install API is available and instead explains how to copy the link
+//   and open it in Chrome/Safari to install from there.
+// • Disappears permanently after successful install (appinstalled event).
+// • Re-appears if the app is deleted (checked on every load via display-mode).
+// ═══════════════════════════════════════════════════════
+
+(function setupInstallButton() {
+  const installBtn = document.getElementById('install-btn');
+  const modal = document.getElementById('install-modal');
+  const modalBody = document.getElementById('install-modal-body');
+  const modalTitle = document.getElementById('install-modal-title');
+  const modalAction = document.getElementById('install-modal-action');
+  const modalClose = document.getElementById('install-modal-close');
+
+  // Already running as an installed standalone app — hide button, do nothing.
+  const checkStandalone = () =>
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
+  if (checkStandalone()) return;
+
+  // Also check after load in case the browser reports standalone slightly late
+  window.addEventListener('load', () => {
+    if (checkStandalone()) installBtn.classList.remove('visible');
+  });
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  // Detect in-app browsers (WebViews): they lack beforeinstallprompt AND
+  // are not full standalone browsers. Common signals:
+  // - WhatsApp/Telegram/Instagram on Android: missing "Chrome" in UA but has "wv"
+  // - Facebook: has "FBAN" or "FBAV"
+  // - Generic WebView: has "wv" flag
+  const ua = navigator.userAgent;
+  const isInAppBrowser =
+    /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Telegram|Line|Twitter/.test(ua) ||
+    (/Android/.test(ua) && /wv/.test(ua));
+
+  // Current page URL — shown to user so they can copy it
+  const currentURL = window.location.href;
+
+  function openModal() { modal.classList.add('open'); }
+  function closeModal() { modal.classList.remove('open'); }
+
+  modalClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  function step(num, text) {
+    return `<div class="install-step"><div class="install-step-num">${num}</div><div>${text}</div></div>`;
+  }
+
+  // Show the install button (it's hidden in CSS by default)
+  installBtn.classList.add('visible');
+
+  let deferredPrompt = null;
+
+  if (isInAppBrowser) {
+    // In-app browser: no install API available at all.
+    // Show instructions to copy the URL and open in real browser.
+    installBtn.addEventListener('click', () => {
+      modalTitle.textContent = '📲 כיצד להתקין את האפליקציה';
+      modalAction.style.display = 'none';
+      modalBody.innerHTML =
+        `<p style="font-size:0.85rem;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+          אתה פותח את הדף מתוך אפליקציה אחרת (כמו וואטסאפ), ולא ניתן להתקין משם.<br>
+          יש לפתוח את הקישור בדפדפן Chrome או Safari.
+        </p>` +
+        step(1, `לחץ על ⋮ (שלוש נקודות) בפינה העליונה → <strong>פתח בדפדפן</strong>`) +
+        step(2, `אם אין אפשרות כזו, לחץ על הכפתור כדי להעתיק את הקישור לאתר:<br>
+          <button id="copy-link-btn" onclick="
+            if(navigator.clipboard){
+              navigator.clipboard.writeText('${currentURL}')
+                .then(()=>{this.textContent='✓ הועתק!';this.style.background='#4a7c59';})
+                .catch(()=>{this.textContent='לא הצליח — העתק ידנית';this.disabled=true;});
+            } else {
+              this.textContent='לא נתמך בדפדפן זה';this.disabled=true;
+            }
+          " style="margin-top:6px;background:var(--accent);color:white;border:none;border-radius:8px;padding:6px 16px;font-family:Heebo,sans-serif;font-size:0.85rem;cursor:pointer;font-weight:600;">העתק קישור</button>
+        `) +
+        step(3, `הדבק את הקישור בדפדפן Chrome (אנדרואיד) או Safari (אייפון) ופתח אותו`) +
+        step(4, `לחץ על כפתור ההתקנה שיופיע`);
+      openModal();
+    });
+    return;
+  }
+
+  if (isIOS) {
+    // iOS Safari: no beforeinstallprompt, must use Share sheet.
+    installBtn.addEventListener('click', () => {
+      modalTitle.textContent = '📲 התקנה על אייפון / אייפד';
+      modalAction.style.display = 'none';
+      modalBody.innerHTML =
+        step(1, `לחץ על כפתור השיתוף <strong>⬆</strong> בתחתית המסך (בסרגל Safari)`) +
+        step(2, `גלול למטה ברשימה ולחץ על <strong>"הוסף למסך הבית"</strong>`) +
+        step(3, `בחר שם לאפליקציה ולחץ על <strong>"הוסף"</strong>`) +
+        step(4, `האפליקציה תופיע על מסך הבית עם האייקון שלה, ותיפתח כאפליקציה מלאה ללא שורת כתובת`);
+      openModal();
+    });
+    return;
+  }
+
+  // Android / Chrome / Edge: wait for beforeinstallprompt
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Button is already visible — clicking it will trigger the native dialog directly.
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      // Native install dialog available — trigger it directly without opening modal
+      installBtn.disabled = true;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.disabled = false;
+      if (outcome === 'accepted') {
+        installBtn.classList.remove('visible');
+        showToast('האפליקציה הותקנה ✓');
+      }
+    } else {
+      // Chrome but beforeinstallprompt hasn't fired yet — show short explanation
+      modalTitle.textContent = '📲 התקנת האפליקציה';
+      modalAction.style.display = 'none';
+      modalBody.innerHTML =
+        `<p style="font-size:0.85rem;color:var(--text2);margin-bottom:14px;line-height:1.6;background:var(--bg2);padding:10px 12px;border-radius:10px;">
+          Chrome מאפשר התקנה רק לאחר ביקור ראשון וגלילה קצרה.<br>
+          <strong>סגור את הלשונית, היכנס שוב, גלול מעט — ונסה שוב.</strong>
+        </p>` +
+        step(1, `לחץ על ⋮ בפינה הימנית העליונה של Chrome`) +
+        step(2, `בחר <strong>"הוסף למסך הבית"</strong> או <strong>"התקן אפליקציה"</strong>`) +
+        step(3, `לחץ <strong>"התקן"</strong> בחלון שנפתח`);
+      openModal();
+    }
+  });
+
+  // Hide the button permanently once the app is installed
+  window.addEventListener('appinstalled', () => {
+    installBtn.classList.remove('visible');
+  });
+})();
+
+</script>
+</body>
+</html>

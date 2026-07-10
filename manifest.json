@@ -1,0 +1,33 @@
+{
+  "name": "רשימת משימות שבועי",
+  "short_name": "משימות שבועי",
+  "description": "מעקב משימות יומי בתצוגה שבועית, עם פרשת השבוע ולוח עברי מסונכרן לארץ ישראל",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2c1810",
+  "theme_color": "#2c1810",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
