@@ -2932,7 +2932,13 @@ document.getElementById('export-btn').addEventListener('click', async () => {
   const today = new Date().toISOString().slice(0, 10);
   const filename = `משימות שבועי - גיבוי ${today}.json`;
 
-  // Try Web Share API first (works reliably on Android PWA)
+  // APK: use Android bridge
+  if (typeof window.AndroidBridge !== 'undefined' && window.AndroidBridge.saveBackup) {
+    window.AndroidBridge.saveBackup(filename, json);
+    return;
+  }
+
+  // Mobile browser: Web Share API
   if (navigator.share && navigator.canShare) {
     try {
       const file = new File([json], filename, { type: 'application/json' });
@@ -2942,11 +2948,11 @@ document.getElementById('export-btn').addEventListener('click', async () => {
         return;
       }
     } catch(e) {
-      if (e.name === 'AbortError') return; // user cancelled share sheet
+      if (e.name === 'AbortError') return;
     }
   }
 
-  // Fallback: anchor download (works on desktop)
+  // Desktop fallback
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -2959,6 +2965,17 @@ document.getElementById('export-btn').addEventListener('click', async () => {
   showToast('הנתונים יוצאו בהצלחה ✓');
 });
 
+// Called by Android after user picks a file
+window.onAndroidFileLoaded = function(content) {
+  if (!content) { showToast('שגיאה בקריאת הקובץ'); return; }
+  try {
+    const data = JSON.parse(content);
+    if (!data['shabbat-tasks']) { showToast('קובץ לא תקין'); return; }
+    pendingImportData = data;
+    document.getElementById('import-confirm-box').style.display = 'block';
+  } catch(e) { showToast('שגיאה בקריאת הקובץ'); }
+};
+
 // IMPORT — shows custom confirm before overwriting
 let pendingImportData = null;
 
@@ -2969,19 +2986,21 @@ document.getElementById('import-input').addEventListener('change', (e) => {
   reader.onload = (ev) => {
     try {
       const data = JSON.parse(ev.target.result);
-      if (!data['shabbat-tasks']) {
-        showToast('קובץ לא תקין — לא נמצאו נתונים');
-        return;
-      }
-      // Store and show custom confirm
+      if (!data['shabbat-tasks']) { showToast('קובץ לא תקין — לא נמצאו נתונים'); return; }
       pendingImportData = data;
       document.getElementById('import-confirm-box').style.display = 'block';
-    } catch(err) {
-      showToast('שגיאה בקריאת הקובץ');
-    }
+    } catch(err) { showToast('שגיאה בקריאת הקובץ'); }
   };
   reader.readAsText(file);
   e.target.value = '';
+});
+
+document.getElementById('import-label').addEventListener('click', (e) => {
+  // APK: use Android bridge file picker instead of input[type=file]
+  if (typeof window.AndroidBridge !== 'undefined' && window.AndroidBridge.openFilePicker) {
+    e.preventDefault();
+    window.AndroidBridge.openFilePicker();
+  }
 });
 
 document.getElementById('import-confirm-yes').addEventListener('click', () => {
