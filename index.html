@@ -1618,15 +1618,48 @@ function renderGrid() {
     div.className = 'task-name-cell';
     div.dataset.idx = idx;
     const badge = getTaskTimeBadgeText(task);
+    const taskNoteKey = `task-note-${task.id}`;
+    const hasTaskNote = !!notes[taskNoteKey];
     div.innerHTML = `
       <div class="drag-handle">⠿</div>
       <div class="task-color-dot" style="background:${task.color||'#8b4513'}"></div>
-      <div style="flex:1;overflow:hidden;min-width:0;">
+      <div style="flex:1;overflow:hidden;min-width:0;position:relative;">
         <div class="task-name-text">${task.name}</div>
         ${badge ? `<div class="task-time-badge">${badge}</div>` : ''}
       </div>
+      ${hasTaskNote ? '<div class="note-marker" style="top:4px;right:4px;left:auto;" title="יש הערה למשימה"></div>' : ''}
     `;
+
+    // Long-press on task name → open task-level note
+    let taskPressTimer = null;
+    let taskLongFired = false;
+    let taskStartX = 0, taskStartY = 0;
+
+    div.addEventListener('contextmenu', e => e.preventDefault());
+    div.addEventListener('pointerdown', e => {
+      taskLongFired = false;
+      taskStartX = e.clientX; taskStartY = e.clientY;
+      taskPressTimer = setTimeout(() => {
+        taskLongFired = true;
+        openTaskNoteModal(task);
+      }, 2000);
+      div.style.outline = '2px solid var(--gold)';
+    });
+    div.addEventListener('pointermove', e => {
+      if (taskPressTimer && (Math.abs(e.clientX-taskStartX)>10 || Math.abs(e.clientY-taskStartY)>10)) {
+        clearTimeout(taskPressTimer); taskPressTimer = null;
+        div.style.outline = '';
+      }
+    });
+    ['pointerup','pointercancel','pointerleave'].forEach(evt => {
+      div.addEventListener(evt, () => {
+        if (taskPressTimer) { clearTimeout(taskPressTimer); taskPressTimer = null; }
+        div.style.outline = '';
+      });
+    });
+
     div.addEventListener('click', (e) => {
+      if (taskLongFired) { taskLongFired = false; return; }
       if (dragHappened) { dragHappened = false; return; }
       openEditModal(task);
     });
@@ -1948,16 +1981,25 @@ function openNoteModal(taskId, dayIndex, wk) {
 }
 
 function openDayNoteModal(dayIndex, wk) {
-  noteModalTarget = { taskId: null, dayIndex, wk, isDayNote: true };
+  noteModalTarget = { taskId: null, dayIndex, wk, isDayNote: true, isTaskNote: false };
   const key = dayNoteKey(dayIndex, wk);
   const input = document.getElementById('note-input');
   input.value = notes[key] || '';
-
-  document.getElementById('note-modal-subtitle').textContent =
-    `הערה ליום ${DAY_NAMES[dayIndex]}`;
+  document.getElementById('note-modal-subtitle').textContent = `הערה ליום ${DAY_NAMES[dayIndex]}`;
   document.getElementById('note-char-count').textContent = `${input.value.length}/40`;
   document.getElementById('note-delete-btn').style.display = notes[key] ? 'inline-block' : 'none';
+  document.getElementById('note-overlay').classList.add('open');
+  setTimeout(() => input.focus(), 100);
+}
 
+function openTaskNoteModal(task) {
+  const key = `task-note-${task.id}`;
+  noteModalTarget = { taskId: task.id, dayIndex: null, wk: null, isDayNote: false, isTaskNote: true };
+  const input = document.getElementById('note-input');
+  input.value = notes[key] || '';
+  document.getElementById('note-modal-subtitle').textContent = `הערה כללית — ${task.name}`;
+  document.getElementById('note-char-count').textContent = `${input.value.length}/40`;
+  document.getElementById('note-delete-btn').style.display = notes[key] ? 'inline-block' : 'none';
   document.getElementById('note-overlay').classList.add('open');
   setTimeout(() => input.focus(), 100);
 }
@@ -1969,15 +2011,37 @@ function closeNoteModal() {
 
 function saveNote() {
   if (!noteModalTarget) return;
-  const { taskId, dayIndex, wk, isDayNote } = noteModalTarget;
+  const { taskId, dayIndex, wk, isDayNote, isTaskNote } = noteModalTarget;
   const text = document.getElementById('note-input').value.trim().slice(0, 40);
 
-  if (isDayNote) {
+  if (isTaskNote) {
+    // Task-level note (permanent, not week-specific)
+    const key = `task-note-${taskId}`;
+    if (text) notes[key] = text;
+    else delete notes[key];
+    save();
+    // Update indicator on task name cell in-place
+    const taskCells = document.querySelectorAll('.task-name-cell');
+    taskCells.forEach(cell => {
+      const idx = parseInt(cell.dataset.idx);
+      if (!isNaN(idx) && tasks[idx] && tasks[idx].id === taskId) {
+        let marker = cell.querySelector('.note-marker');
+        if (text && !marker) {
+          marker = document.createElement('div');
+          marker.className = 'note-marker';
+          marker.style.cssText = 'top:4px;right:4px;left:auto;';
+          marker.title = 'יש הערה למשימה';
+          cell.appendChild(marker);
+        } else if (!text && marker) {
+          marker.remove();
+        }
+      }
+    });
+  } else if (isDayNote) {
     const key = dayNoteKey(dayIndex, wk);
     if (text) notes[key] = text;
     else delete notes[key];
     save();
-    // Update day header marker in-place
     const headerEl = document.querySelector(`.day-header-cell[data-di="${dayIndex}"]`);
     if (headerEl) {
       let marker = headerEl.querySelector('.day-note-marker');
@@ -1995,7 +2059,6 @@ function saveNote() {
     if (text) notes[key] = text;
     else delete notes[key];
     save();
-    // Update cell marker in-place
     const cell = document.querySelector(`.check-cell[data-task="${taskId}"][data-day="${dayIndex}"]`);
     if (cell) {
       let marker = cell.querySelector('.note-marker');
@@ -2738,7 +2801,7 @@ function buildWeekSummaryText() {
           // \u00A0 = non-breaking space — keeps name+emoji together as one unit
           return `${s.name}\u00A0${ss === 'done' ? '✅' : ss === 'late' ? '🟣' : ss === 'failed' ? '🔴' : '⚪'}`;
         }).join('   ');
-        partialSubtaskLines.push(`${task.name} — ${DAY_SHORT[di]}: ${subDetail}`);
+        partialSubtaskLines.push(`${task.name} — ${DAY_SHORT[di]}:\n${subDetail}`);
       }
     }
     if (activeCount === 0) return;
@@ -2760,15 +2823,20 @@ function buildWeekSummaryText() {
   }
 
   // Day-level notes, then task notes
+  // Task-level general notes
+  const taskNoteLines = [];
+  tasks.forEach(task => {
+    const key = `task-note-${task.id}`;
+    if (notes[key]) taskNoteLines.push(`${task.name}: ${notes[key]}`);
+  });
+
   const dayNoteLines = [];
   for (let di = 0; di < 7; di++) {
     const key = dayNoteKey(di, wk);
-    if (notes[key]) {
-      dayNoteLines.push(`יום ${DAY_NAMES[di]}: ${notes[key]}`);
-    }
+    if (notes[key]) dayNoteLines.push(`יום ${DAY_NAMES[di]}: ${notes[key]}`);
   }
 
-  const allNotes = [...dayNoteLines, ...noteLines];
+  const allNotes = [...taskNoteLines, ...dayNoteLines, ...noteLines];
   if (allNotes.length > 0) {
     lines.push('');
     lines.push('📝 הערות:');
