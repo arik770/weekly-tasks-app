@@ -1283,9 +1283,16 @@
       <input type="file" id="import-input" accept=".json" style="display:none;">
     </label>
 
-    <p id="import-warning" style="display:none;font-size:0.75rem;color:var(--failed);margin-top:10px;text-align:center;">
-      שחזור ידרוס את כל הנתונים הקיימים!
-    </p>
+    <!-- Custom confirm box (replaces browser confirm() which is blocked in PWA) -->
+    <div id="import-confirm-box" style="display:none;margin-top:14px;background:var(--failed-bg);border-radius:10px;padding:12px 14px;">
+      <p style="font-size:0.82rem;color:var(--failed);margin:0 0 10px;font-weight:600;text-align:center;">
+        ⚠️ שחזור ידרוס את כל הנתונים הקיימים!
+      </p>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-save" id="import-confirm-yes" style="flex:1;background:#c0392b;border-color:#c0392b;">כן, שחזר</button>
+        <button class="btn-cancel" id="import-confirm-no" style="flex:1;">ביטול</button>
+      </div>
+    </div>
 
     <button class="btn-cancel" id="backup-close-btn" style="width:100%;margin-top:14px;">סגור</button>
   </div>
@@ -2927,19 +2934,14 @@ document.getElementById('export-btn').addEventListener('click', () => {
   const today = new Date().toISOString().slice(0, 10);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `mishimot-backup-${today}.json`;
+  a.download = `משימות שבועי - גיבוי ${today}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('הנתונים יוצאו בהצלחה ✓');
 });
 
-// IMPORT
-document.getElementById('import-label').addEventListener('mouseenter', () => {
-  document.getElementById('import-warning').style.display = 'block';
-});
-document.getElementById('import-label').addEventListener('mouseleave', () => {
-  document.getElementById('import-warning').style.display = 'none';
-});
+// IMPORT — shows custom confirm before overwriting
+let pendingImportData = null;
 
 document.getElementById('import-input').addEventListener('change', (e) => {
   const file = e.target.files[0];
@@ -2948,24 +2950,36 @@ document.getElementById('import-input').addEventListener('change', (e) => {
   reader.onload = (ev) => {
     try {
       const data = JSON.parse(ev.target.result);
-      // Validate: must have at least tasks key
       if (!data['shabbat-tasks']) {
         showToast('קובץ לא תקין — לא נמצאו נתונים');
         return;
       }
-      if (!confirm('שחזור ידרוס את כל הנתונים הקיימים. להמשיך?')) return;
-      BACKUP_KEYS.forEach(k => {
-        if (data[k]) localStorage.setItem(k, data[k]);
-        else localStorage.removeItem(k);
-      });
-      showToast('הנתונים שוחזרו — טוען מחדש...');
-      setTimeout(() => location.reload(), 1000);
+      // Store and show custom confirm
+      pendingImportData = data;
+      document.getElementById('import-confirm-box').style.display = 'block';
     } catch(err) {
       showToast('שגיאה בקריאת הקובץ');
     }
   };
   reader.readAsText(file);
-  e.target.value = ''; // reset so same file can be re-selected
+  e.target.value = '';
+});
+
+document.getElementById('import-confirm-yes').addEventListener('click', () => {
+  if (!pendingImportData) return;
+  BACKUP_KEYS.forEach(k => {
+    if (pendingImportData[k]) localStorage.setItem(k, pendingImportData[k]);
+    else localStorage.removeItem(k);
+  });
+  pendingImportData = null;
+  document.getElementById('import-confirm-box').style.display = 'none';
+  showToast('הנתונים שוחזרו — טוען מחדש...');
+  setTimeout(() => location.reload(), 1000);
+});
+
+document.getElementById('import-confirm-no').addEventListener('click', () => {
+  pendingImportData = null;
+  document.getElementById('import-confirm-box').style.display = 'none';
 });
 
 document.getElementById('reset-app-btn').addEventListener('click', () => {
