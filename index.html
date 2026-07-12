@@ -2922,20 +2922,39 @@ document.getElementById('backup-overlay').addEventListener('click', e => {
 });
 
 // EXPORT
-document.getElementById('export-btn').addEventListener('click', () => {
+document.getElementById('export-btn').addEventListener('click', async () => {
   const data = {};
   BACKUP_KEYS.forEach(k => {
     const val = localStorage.getItem(k);
     if (val) data[k] = val;
   });
   const json = JSON.stringify(data, null, 2);
+  const today = new Date().toISOString().slice(0, 10);
+  const filename = `משימות שבועי - גיבוי ${today}.json`;
+
+  // Try Web Share API first (works reliably on Android PWA)
+  if (navigator.share && navigator.canShare) {
+    try {
+      const file = new File([json], filename, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'גיבוי משימות שבועי' });
+        showToast('הנתונים יוצאו בהצלחה ✓');
+        return;
+      }
+    } catch(e) {
+      if (e.name === 'AbortError') return; // user cancelled share sheet
+    }
+  }
+
+  // Fallback: anchor download (works on desktop)
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const today = new Date().toISOString().slice(0, 10);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `משימות שבועי - גיבוי ${today}.json`;
+  a.download = filename;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('הנתונים יוצאו בהצלחה ✓');
 });
