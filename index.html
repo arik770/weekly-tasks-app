@@ -978,56 +978,6 @@
   }
 
   .section-divider { height: 1px; background: var(--border-light); margin: 8px 0; }
-
-  /* ─── REMINDER SECTION ─── */
-  .reminder-toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 0 10px;
-  }
-  .reminder-switch {
-    width: 44px; height: 26px;
-    background: var(--border);
-    border-radius: 14px;
-    position: relative;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.2s;
-    display: inline-block;
-  }
-  .reminder-switch.on { background: var(--accent); }
-  .reminder-switch-knob {
-    position: absolute;
-    top: 3px; right: 3px;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: white;
-    transition: transform 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  }
-  .reminder-switch.on .reminder-switch-knob { transform: translateX(-18px); }
-
-  .permission-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 20px;
-  }
-  .permission-indicator.granted { background: var(--check-bg); color: var(--check); }
-  .permission-indicator.denied  { background: var(--failed-bg); color: var(--failed); }
-  .permission-indicator.unknown { background: var(--bg2); color: var(--text3); }
-  .permission-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .permission-indicator.granted .permission-dot { background: var(--check); }
-  .permission-indicator.denied  .permission-dot { background: var(--failed); }
-  .permission-indicator.unknown .permission-dot { background: var(--text3); }
 </style>
 </head>
 <body>
@@ -1047,7 +997,6 @@
       <button class="btn-icon" id="whatsapp-share" title="שלח סיכום בוואטסאפ" style="background:#25D366;border-color:#25D366;">
         <svg viewBox="0 0 32 32" width="18" height="18" fill="white"><path d="M16.04 4C9.4 4 4 9.4 4 16.04c0 2.4.66 4.64 1.8 6.56L4 28l5.6-1.78a11.98 11.98 0 0 0 6.44 1.82c6.64 0 12.04-5.4 12.04-12.04C28.08 9.4 22.68 4 16.04 4zm0 21.96c-2.1 0-4.06-.58-5.74-1.6l-.4-.24-3.98 1.27 1.3-3.86-.26-.4a9.93 9.93 0 0 1-1.6-5.35c0-5.5 4.5-10 10.06-10 2.68 0 5.2 1.05 7.1 2.95a9.97 9.97 0 0 1 2.94 7.1c.02 5.55-4.46 10.13-9.42 10.13zm5.5-7.5c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.46.13-.61.15-.15.34-.4.5-.6.17-.2.22-.34.34-.57.12-.22.06-.42-.04-.57-.1-.15-.6-1.45-.82-1.98-.22-.52-.44-.45-.6-.46-.16-.01-.34-.01-.52-.01-.18 0-.47.07-.72.32-.25.27-.96.94-.96 2.29 0 1.35.98 2.66 1.12 2.84.13.18 1.86 2.85 4.55 3.88 2.7 1.03 2.7.69 3.18.65.48-.04 1.57-.64 1.79-1.27.22-.62.22-1.15.15-1.27-.07-.12-.27-.2-.57-.34z"/></svg>
       </button>
-      <button class="btn-icon" id="backup-btn" title="גיבוי ושחזור נתונים">💾</button>
       <button class="btn-icon" id="reset-app-btn" title="איפוס לברירת מחדל" style="font-size:1.3rem;">↺</button>
     </div>
   </div>
@@ -1151,63 +1100,6 @@
       <button class="subtask-add-btn" id="subtask-add-btn">＋ הוסף תת-משימה</button>
     </div>
 
-    <!-- REMINDER SECTION — always visible -->
-    <div class="form-group" id="reminder-group">
-      <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
-        <span>תזכורת 🔔</span>
-        <div id="permission-indicator" class="permission-indicator unknown">
-          <div class="permission-dot"></div>
-          <span id="permission-text">בודק...</span>
-        </div>
-      </label>
-
-      <!-- shown when timeMode = allday -->
-      <div id="reminder-no-time-msg" style="font-size:0.78rem;color:var(--text3);margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:8px;line-height:1.5;">
-        כדי להגדיר תזכורת, יש לבחור שעה (לא "כל היום") בקטע הזמן למעלה.
-      </div>
-
-      <!-- shown when timeMode != allday -->
-      <div id="reminder-controls">
-        <div class="reminder-toggle-row">
-          <span style="font-size:0.82rem;color:var(--text2);">הפעל תזכורת</span>
-          <span class="reminder-switch" id="reminder-switch"><span class="reminder-switch-knob"></span></span>
-        </div>
-
-        <div id="reminder-details" style="display:none;">
-          <div class="form-group" style="margin-bottom:12px;">
-            <label class="form-label" style="margin-bottom:6px;">ימי תזכורת</label>
-            <div class="days-picker" id="reminder-days-picker">
-              <button class="day-chip" data-rday="0">א'</button>
-              <button class="day-chip" data-rday="1">ב'</button>
-              <button class="day-chip" data-rday="2">ג'</button>
-              <button class="day-chip" data-rday="3">ד'</button>
-              <button class="day-chip" data-rday="4">ה'</button>
-              <button class="day-chip" data-rday="5">ו'</button>
-              <button class="day-chip" data-rday="6">ש'</button>
-              <button class="day-chip day-chip-all" id="select-all-reminder-days">הכל</button>
-            </div>
-          </div>
-
-          <div class="form-group" style="margin-bottom:12px;">
-            <label class="form-label" style="margin-bottom:6px;">כמה זמן לפני</label>
-            <select class="form-input" id="reminder-lead-select">
-              <option value="0">בדיוק בזמן</option>
-              <option value="5">5 דקות לפני</option>
-              <option value="10">10 דקות לפני</option>
-              <option value="15">15 דקות לפני</option>
-              <option value="30">30 דקות לפני</option>
-              <option value="60">שעה לפני</option>
-            </select>
-          </div>
-
-          <button type="button" class="time-toggle-btn" id="test-reminder-btn"
-            style="width:100%;padding:9px;font-size:0.82rem;margin-top:2px;">
-            🔔 בדוק התראה עכשיו
-          </button>
-        </div>
-      </div>
-    </div>
-
     <div class="form-group">
       <label class="form-label">צבע</label>
       <div class="color-picker" id="color-picker">
@@ -1263,38 +1155,6 @@
     <div id="subtask-panel-subtitle" style="font-size:0.78rem;color:var(--text3);margin-bottom:14px;"></div>
     <div id="subtask-panel-rows"></div>
     <button class="btn-cancel" id="subtask-panel-close" style="width:100%;margin-top:14px;">סגור</button>
-  </div>
-</div>
-
-<!-- BACKUP / RESTORE MODAL -->
-<div class="modal-overlay" id="backup-overlay" style="align-items:center;justify-content:center;">
-  <div class="modal" style="border-radius:20px;transform:scale(0.95);opacity:0;transition:transform 0.25s,opacity 0.25s;max-width:340px;padding:24px 20px;">
-    <div class="modal-title" style="margin-bottom:6px;">💾 גיבוי ושחזור</div>
-    <p style="font-size:0.82rem;color:var(--text2);margin-bottom:18px;line-height:1.6;">
-      הגיבוי שומר את כל המשימות, הסימונים, ההיסטוריה וההערות לקובץ JSON במכשיר שלך.
-    </p>
-
-    <button class="btn-save" id="export-btn" style="width:100%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
-      📤 ייצא נתונים (גיבוי)
-    </button>
-
-    <label class="btn-cancel" id="import-label" style="width:100%;margin-bottom:0;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-align:center;box-sizing:border-box;">
-      📥 ייבא נתונים (שחזור)
-      <input type="file" id="import-input" accept=".json" style="display:none;">
-    </label>
-
-    <!-- Custom confirm box (replaces browser confirm() which is blocked in PWA) -->
-    <div id="import-confirm-box" style="display:none;margin-top:14px;background:var(--failed-bg);border-radius:10px;padding:12px 14px;">
-      <p style="font-size:0.82rem;color:var(--failed);margin:0 0 10px;font-weight:600;text-align:center;">
-        ⚠️ שחזור ידרוס את כל הנתונים הקיימים!
-      </p>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-save" id="import-confirm-yes" style="flex:1;background:#c0392b;border-color:#c0392b;">כן, שחזר</button>
-        <button class="btn-cancel" id="import-confirm-no" style="flex:1;">ביטול</button>
-      </div>
-    </div>
-
-    <button class="btn-cancel" id="backup-close-btn" style="width:100%;margin-top:14px;">סגור</button>
   </div>
 </div>
 
@@ -2355,7 +2215,6 @@ let modalColor = COLORS[0];
 let modalTimeMode = 'allday';
 let modalPerDayTimes = {};
 let modalSubtasks = []; // [{id, name}, ...]
-let modalReminder = { enabled: false, days: [], leadMinutes: 0 };
 
 function getModalActiveDays() {
   return [...modalDays].sort();
@@ -2368,7 +2227,6 @@ function openAddModal() {
   modalTimeMode = 'allday';
   modalPerDayTimes = {};
   modalSubtasks = [];
-  modalReminder = { enabled: false, days: [0,1,2,3,4,5,6], leadMinutes: 0 };
   document.getElementById('task-name-input').value = '';
   document.getElementById('task-time-input').value = '';
   document.getElementById('modal-title').textContent = 'משימה חדשה';
@@ -2479,180 +2337,6 @@ function syncModalUI() {
   if (modalTimeMode === 'perDay') renderPerDayTimes();
 
   renderSubtaskEditList();
-
-  // Reminder section: always visible, but disabled with explanation when no time is set
-  const hasTime = modalTimeMode !== 'allday';
-  document.getElementById('reminder-group').style.display = 'block';
-  document.getElementById('reminder-no-time-msg').style.display = hasTime ? 'none' : 'block';
-  document.getElementById('reminder-controls').style.display = hasTime ? 'block' : 'none';
-  if (hasTime) {
-    syncReminderUI();
-    updatePermissionIndicator();
-  }
-}
-
-function updatePermissionIndicator() {
-  const el = document.getElementById('permission-indicator');
-  const txt = document.getElementById('permission-text');
-  // In Android APK, permissions are handled natively — always show as granted
-  if (isAndroidApp()) {
-    el.className = 'permission-indicator granted'; txt.textContent = 'מאושר ✓'; return;
-  }
-  if (typeof Notification === 'undefined') {
-    el.className = 'permission-indicator denied'; txt.textContent = 'לא נתמך'; return;
-  }
-  if (Notification.permission === 'granted') {
-    el.className = 'permission-indicator granted'; txt.textContent = 'מאושר ✓';
-  } else if (Notification.permission === 'denied') {
-    el.className = 'permission-indicator denied'; txt.textContent = 'חסום — יש לאפשר בדפדפן';
-  } else {
-    el.className = 'permission-indicator unknown'; txt.textContent = 'לא הוחלט';
-  }
-}
-
-function syncReminderUI() {
-  const sw = document.getElementById('reminder-switch');
-  const details = document.getElementById('reminder-details');
-  sw.classList.toggle('on', modalReminder.enabled);
-  details.style.display = modalReminder.enabled ? 'block' : 'none';
-  const activeDays = getModalActiveDays();
-  document.querySelectorAll('#reminder-days-picker .day-chip[data-rday]').forEach(c => {
-    const d = +c.dataset.rday;
-    c.style.display = activeDays.includes(d) ? '' : 'none';
-    c.classList.toggle('selected', modalReminder.days.includes(d));
-  });
-  const allSel = activeDays.length > 0 && activeDays.every(d => modalReminder.days.includes(d));
-  document.getElementById('select-all-reminder-days').classList.toggle('selected', allSel);
-  document.getElementById('reminder-lead-select').value = String(modalReminder.leadMinutes);
-}
-
-document.getElementById('reminder-switch').addEventListener('click', () => {
-  // In Android APK — permissions handled natively, just toggle
-  if (isAndroidApp()) {
-    modalReminder.enabled = !modalReminder.enabled;
-    if (modalReminder.enabled && modalReminder.days.length === 0) modalReminder.days = [...getModalActiveDays()];
-    syncReminderUI();
-    return;
-  }
-
-  const perm = typeof Notification !== 'undefined' ? Notification.permission : 'denied';
-  if (!modalReminder.enabled && perm === 'default') {
-    Notification.requestPermission().then(result => {
-      updatePermissionIndicator();
-      if (result === 'granted') {
-        modalReminder.enabled = true;
-        if (modalReminder.days.length === 0) modalReminder.days = [...getModalActiveDays()];
-        syncReminderUI();
-      }
-    });
-    return;
-  }
-  modalReminder.enabled = !modalReminder.enabled;
-  if (modalReminder.enabled && modalReminder.days.length === 0) modalReminder.days = [...getModalActiveDays()];
-  syncReminderUI();
-  if (modalReminder.enabled && perm === 'denied') {
-    showToast('יש לאפשר התראות בהגדרות הדפדפן / האתר');
-  }
-});
-
-document.querySelectorAll('#reminder-days-picker .day-chip[data-rday]').forEach(c => {
-  c.addEventListener('click', () => {
-    const d = +c.dataset.rday;
-    if (modalReminder.days.includes(d)) modalReminder.days = modalReminder.days.filter(x => x !== d);
-    else modalReminder.days.push(d);
-    syncReminderUI();
-  });
-});
-
-document.getElementById('select-all-reminder-days').addEventListener('click', () => {
-  const active = getModalActiveDays();
-  const allSel = active.length > 0 && active.every(d => modalReminder.days.includes(d));
-  modalReminder.days = allSel ? [] : [...active];
-  syncReminderUI();
-});
-
-document.getElementById('reminder-lead-select').addEventListener('change', e => {
-  modalReminder.leadMinutes = parseInt(e.target.value, 10) || 0;
-});
-
-document.getElementById('test-reminder-btn').addEventListener('click', () => {
-  // In Android APK — use native bridge directly
-  if (isAndroidApp()) {
-    try {
-      window.AndroidBridge.showNotification('🔔 בדיקת תזכורת', 'ההתראות עובדות תקין באפליקציה.');
-      showToast('נשלחה התראת בדיקה ✓');
-    } catch(e) { showToast('שגיאה: ' + e.message); }
-    return;
-  }
-  if (typeof Notification === 'undefined') { showToast('הדפדפן לא תומך בהתראות'); return; }
-  if (Notification.permission === 'denied') {
-    showToast('יש לאפשר התראות: לחץ על 🔒 ליד שורת הכתובת → התראות → אפשר');
-    return;
-  }
-  if (Notification.permission !== 'granted') {
-    Notification.requestPermission().then(perm => {
-      updatePermissionIndicator();
-      if (perm === 'granted') fireTestNotification();
-      else showToast('ההרשאה לא אושרה');
-    });
-    return;
-  }
-  fireTestNotification();
-});
-
-// ─ Detect if running inside the Android APK ─
-function isAndroidApp() {
-  try { return !!(window.AndroidBridge && window.AndroidBridge.isAndroidApp()); }
-  catch(e) { return false; }
-}
-
-// ─ Sync all reminder-enabled tasks with Android's AlarmManager ─
-// Called after every task save and on page load.
-function syncRemindersWithAndroid() {
-  if (!isAndroidApp()) return;
-  try {
-    const reminderTasks = tasks
-      .filter(t => t.reminder && t.reminder.enabled && t.timeMode !== 'allday')
-      .map(t => ({
-        id: String(t.id),
-        name: t.name,
-        days: t.reminder.days || [],
-        leadMinutes: t.reminder.leadMinutes || 0,
-        timeMode: t.timeMode,
-        time: t.time || '',
-        times: t.times || {}
-      }));
-    window.AndroidBridge.syncReminders(JSON.stringify(reminderTasks));
-  } catch(e) { /* ignore bridge errors */ }
-}
-
-// Shows notification via Android native (APK) or Service Worker (browser).
-async function showReminderNotification(title, body) {
-  // Android APK: use native notification bridge
-  if (isAndroidApp()) {
-    try { window.AndroidBridge.showNotification(title, body); return; }
-    catch(e) { /* fall through */ }
-  }
-  // Browser: use Service Worker (required on Android Chrome)
-  if ('serviceWorker' in navigator) {
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      await reg.showNotification(title, {
-        body, icon: 'icon.svg', badge: 'icon-192.png', silent: false,
-        actions: [{ action: 'dismiss', title: 'אישור' }]
-      });
-      return;
-    } catch(e) { /* fall through */ }
-  }
-  // Desktop fallback
-  try { new Notification(title, { body, icon: 'icon.svg', silent: false }); }
-  catch(e) { /* ignore */ }
-}
-
-function fireTestNotification() {
-  showReminderNotification('🔔 בדיקת תזכורת', 'ההתראות עובדות תקין במכשיר שלך.');
-  showToast('נשלחה התראת בדיקה ✓');
-  updatePermissionIndicator();
 }
 
 function closeModal() {
@@ -2681,9 +2365,6 @@ function saveTask() {
       ? Object.fromEntries(activeDays.filter(d => modalPerDayTimes[d]).map(d => [d, modalPerDayTimes[d]]))
       : {},
     subtasks: validSubtasks,
-    reminder: modalTimeMode === 'allday'
-      ? { enabled: false, days: [], leadMinutes: 0 }
-      : { enabled: modalReminder.enabled, days: [...modalReminder.days], leadMinutes: modalReminder.leadMinutes }
   };
 
   if (editingTaskId) {
@@ -2889,137 +2570,6 @@ document.getElementById('whatsapp-share').addEventListener('click', () => {
 // RESET TO DEFAULTS
 // ═══════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════
-// BACKUP & RESTORE
-// ═══════════════════════════════════════════════════════
-
-const BACKUP_KEYS = [
-  'shabbat-tasks', 'shabbat-checks', 'shabbat-notes',
-  'shabbat-history', 'shabbat-theme', 'shabbat-zoom',
-  'shabbat-fired-reminders'
-];
-
-function openBackupModal() {
-  const overlay = document.getElementById('backup-overlay');
-  overlay.classList.add('open');
-  const modal = overlay.querySelector('.modal');
-  setTimeout(() => { modal.style.transform = 'scale(1)'; modal.style.opacity = '1'; }, 10);
-  document.getElementById('import-warning').style.display = 'none';
-}
-
-function closeBackupModal() {
-  const overlay = document.getElementById('backup-overlay');
-  const modal = overlay.querySelector('.modal');
-  modal.style.transform = 'scale(0.95)';
-  modal.style.opacity = '0';
-  setTimeout(() => overlay.classList.remove('open'), 250);
-}
-
-document.getElementById('backup-btn').addEventListener('click', openBackupModal);
-document.getElementById('backup-close-btn').addEventListener('click', closeBackupModal);
-document.getElementById('backup-overlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('backup-overlay')) closeBackupModal();
-});
-
-// EXPORT
-document.getElementById('export-btn').addEventListener('click', async () => {
-  const data = {};
-  BACKUP_KEYS.forEach(k => {
-    const val = localStorage.getItem(k);
-    if (val) data[k] = val;
-  });
-  const json = JSON.stringify(data, null, 2);
-  const today = new Date().toISOString().slice(0, 10);
-  const filename = `משימות שבועי - גיבוי ${today}.json`;
-
-  // APK: use Android bridge
-  if (typeof window.AndroidBridge !== 'undefined' && window.AndroidBridge.saveBackup) {
-    window.AndroidBridge.saveBackup(filename, json);
-    return;
-  }
-
-  // Mobile browser: Web Share API
-  if (navigator.share && navigator.canShare) {
-    try {
-      const file = new File([json], filename, { type: 'application/json' });
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'גיבוי משימות שבועי' });
-        showToast('הנתונים יוצאו בהצלחה ✓');
-        return;
-      }
-    } catch(e) {
-      if (e.name === 'AbortError') return;
-    }
-  }
-
-  // Desktop fallback
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast('הנתונים יוצאו בהצלחה ✓');
-});
-
-// Called by Android after user picks a file
-window.onAndroidFileLoaded = function(content) {
-  if (!content) { showToast('שגיאה בקריאת הקובץ'); return; }
-  try {
-    const data = JSON.parse(content);
-    if (!data['shabbat-tasks']) { showToast('קובץ לא תקין'); return; }
-    pendingImportData = data;
-    document.getElementById('import-confirm-box').style.display = 'block';
-  } catch(e) { showToast('שגיאה בקריאת הקובץ'); }
-};
-
-// IMPORT — shows custom confirm before overwriting
-let pendingImportData = null;
-
-document.getElementById('import-input').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if (!data['shabbat-tasks']) { showToast('קובץ לא תקין — לא נמצאו נתונים'); return; }
-      pendingImportData = data;
-      document.getElementById('import-confirm-box').style.display = 'block';
-    } catch(err) { showToast('שגיאה בקריאת הקובץ'); }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-});
-
-document.getElementById('import-label').addEventListener('click', (e) => {
-  // APK: use Android bridge file picker instead of input[type=file]
-  if (typeof window.AndroidBridge !== 'undefined' && window.AndroidBridge.openFilePicker) {
-    e.preventDefault();
-    window.AndroidBridge.openFilePicker();
-  }
-});
-
-document.getElementById('import-confirm-yes').addEventListener('click', () => {
-  if (!pendingImportData) return;
-  BACKUP_KEYS.forEach(k => {
-    if (pendingImportData[k]) localStorage.setItem(k, pendingImportData[k]);
-    else localStorage.removeItem(k);
-  });
-  pendingImportData = null;
-  document.getElementById('import-confirm-box').style.display = 'none';
-  showToast('הנתונים שוחזרו — טוען מחדש...');
-  setTimeout(() => location.reload(), 1000);
-});
-
-document.getElementById('import-confirm-no').addEventListener('click', () => {
-  pendingImportData = null;
-  document.getElementById('import-confirm-box').style.display = 'none';
-});
-
 document.getElementById('reset-app-btn').addEventListener('click', () => {
   showConfirm(
     'לאפס את האפליקציה לברירת המחדל? כל המשימות, הסימונים, ההיסטוריה וההערות שלך יימחקו לצמיתות ולא ניתן לשחזר אותם.',
@@ -3030,7 +2580,6 @@ document.getElementById('reset-app-btn').addEventListener('click', () => {
       localStorage.removeItem('shabbat-notes');
       localStorage.removeItem('shabbat-theme');
       localStorage.removeItem('shabbat-zoom');
-      localStorage.removeItem('shabbat-fired-reminders');
       location.reload();
     },
     'אפס'
@@ -3184,76 +2733,6 @@ function checkAutoArchive() {
 // INIT
 // ═══════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════
-// REMINDER ENGINE
-// Checks every 20 seconds if any reminder is due.
-// Works while the app/tab is open (including in the background).
-// ═══════════════════════════════════════════════════════
-
-let firedReminders = JSON.parse(localStorage.getItem('shabbat-fired-reminders') || '{}');
-
-function pruneFiredReminders(todayKey) {
-  for (const k of Object.keys(firedReminders)) {
-    if (k !== todayKey) delete firedReminders[k];
-  }
-}
-
-function getTaskTimeForDay(task, dayIndex) {
-  if (task.timeMode === 'sameTime') return task.time || '';
-  if (task.timeMode === 'perDay') return (task.times && task.times[dayIndex]) || '';
-  return '';
-}
-
-function checkReminders() {
-  // In Android APK — AlarmManager handles reminders natively, no need to poll
-  if (isAndroidApp()) return;
-  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
-  const now = new Date();
-  const todayKey = dateKey(now);
-  pruneFiredReminders(todayKey);
-  if (!firedReminders[todayKey]) firedReminders[todayKey] = {};
-
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const dayIndex = now.getDay();
-
-  tasks.forEach(task => {
-    if (!task.reminder || !task.reminder.enabled) return;
-    if (!Array.isArray(task.reminder.days) || !task.reminder.days.includes(dayIndex)) return;
-    const time = getTaskTimeForDay(task, dayIndex);
-    if (!time) return;
-
-    const [th, tm] = time.split(':').map(Number);
-    const taskMinutes = th * 60 + tm;
-    const lead = task.reminder.leadMinutes || 0;
-    const triggerMinutes = ((taskMinutes - lead) % 1440 + 1440) % 1440;
-    if (triggerMinutes !== nowMinutes) return;
-
-    const fireKey = `t${task.id}-d${dayIndex}-${time}-l${lead}`;
-    if (firedReminders[todayKey][fireKey]) return;
-    firedReminders[todayKey][fireKey] = true;
-    localStorage.setItem('shabbat-fired-reminders', JSON.stringify(firedReminders));
-
-    const body = lead > 0
-      ? `${task.name} מתחילה בשעה ${time} (בעוד ${lead} דקות)`
-      : `השעה ${time} — הגיע הזמן ל${task.name}`;
-    try {
-      showReminderNotification('🔔 ' + task.name, body);
-    } catch(e) { /* ignore */ }
-  });
-}
-
-function startReminderEngine() {
-  if (isAndroidApp()) {
-    // In APK: Android's AlarmManager handles reminders natively.
-    // Sync current reminder configs to Android on every page load.
-    syncRemindersWithAndroid();
-    return;
-  }
-  // In browser: poll every 20 seconds
-  checkReminders();
-  setInterval(checkReminders, 20000);
-}
-
 function init() {
   initTheme();
   applyZoom();
@@ -3304,7 +2783,6 @@ function init() {
   render();
   document.getElementById('tab-current').style.display = 'block';
   document.getElementById('tab-history').style.display = 'none';
-  startReminderEngine();
 }
 
 init();
