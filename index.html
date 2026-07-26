@@ -2155,13 +2155,23 @@ function renderHistory() {
   }
   el.innerHTML = history.map((h, hi) => {
     const wk = h.weekKey;
+
+    // Filter snapshot tasks against live scope data
+    // A task that was deleted/excluded from this week should not appear
+    const visibleHistoryTasks = h.tasks.filter(snapTask => {
+      const liveTask = tasks.find(t => t.id === snapTask.id);
+      // If task was fully deleted — still show in history (it happened)
+      if (!liveTask) return true;
+      // Apply live scope rules
+      return isTaskInScope(liveTask, wk);
+    });
+
     let totalH = 0, doneH = 0, creditH = 0;
-    h.tasks.forEach(task => {
+    visibleHistoryTasks.forEach(task => {
       const hasSubs = (task.subtasks || []).length > 0;
       [0,1,2,3,4,5,6].forEach(di => {
         if (isTaskActiveOnDay(task, di)) {
           totalH++;
-          // Always read from live checks — so back-edits are reflected immediately
           const status = hasSubs
             ? computeSubtaskStatus(task, di, wk)
             : getStatus(checkKey(task.id, di, wk));
@@ -2183,7 +2193,7 @@ function renderHistory() {
         </div>
       </div>
       <div class="history-body" id="hist-${hi}">
-        ${h.tasks.map(task => {
+        ${visibleHistoryTasks.map(task => {
           const hasSubs = (task.subtasks || []).length > 0;
           const dayChecks = [0,1,2,3,4,5,6].map(di => ({
             active: isTaskActiveOnDay(task, di),
