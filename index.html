@@ -1066,6 +1066,25 @@
       <input class="form-input" type="text" id="task-name-input" placeholder="לדוגמה: תפילת שחרית" maxlength="40">
     </div>
 
+    <!-- SCOPE: only shown when editing (hidden for new tasks = always 'all') -->
+    <div class="form-group" id="scope-group" style="display:none;">
+      <label class="form-label">תחולה</label>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="task-scope" value="all" id="scope-all" checked>
+          <span>כל השבועות (כולל הישנים)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="task-scope" value="from" id="scope-from">
+          <span>מהשבוע הנוכחי ואילך</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;cursor:pointer;">
+          <input type="radio" name="task-scope" value="week" id="scope-week">
+          <span>שבוע נוכחי בלבד</span>
+        </label>
+      </div>
+    </div>
+
     <div class="form-group" id="days-picker-group">
       <label class="form-label">בחר ימים</label>
       <div class="days-picker" id="days-picker">
@@ -1130,6 +1149,25 @@
     <div class="modal-actions" style="margin-top:0;">
       <button class="btn-delete" id="confirm-yes" style="flex:1;">מחק</button>
       <button class="btn-cancel" id="confirm-no" style="flex:1;">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE SCOPE MODAL -->
+<div class="modal-overlay" id="delete-scope-overlay" style="align-items:center;justify-content:center;">
+  <div class="modal" style="max-width:340px;border-radius:20px;padding:24px 20px;">
+    <div class="modal-title" style="margin-bottom:16px;">מחיקת משימה</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn-cancel" id="delete-week-btn" style="text-align:right;padding:12px 14px;font-size:0.88rem;">
+        🗓 מחק רק מהשבוע הנוכחי
+      </button>
+      <button class="btn-cancel" id="delete-from-btn" style="text-align:right;padding:12px 14px;font-size:0.88rem;">
+        ➡️ מחק מכאן ולהבא
+      </button>
+      <button class="btn-delete" id="delete-all-btn" style="text-align:right;padding:12px 14px;font-size:0.88rem;">
+        🗑 מחק לגמרי מכל השבועות
+      </button>
+      <button class="btn-cancel" id="delete-scope-cancel" style="margin-top:4px;">ביטול</button>
     </div>
   </div>
 </div>
@@ -1480,6 +1518,19 @@ function isTaskActiveOnDay(task, dayIndex) {
   return true;
 }
 
+// Check if a task should appear in a given week
+function isTaskInScope(task, wk) {
+  // endWeek: task was deleted from this week onwards
+  if (task.endWeek && wk >= task.endWeek) return false;
+  // excludedWeeks: task was deleted from specific weeks only
+  if (task.excludedWeeks && task.excludedWeeks.includes(wk)) return false;
+  // scopeType: controls which weeks show the task
+  if (!task.scopeType || task.scopeType === 'all') return true;
+  if (task.scopeType === 'week') return wk === task.scopeWeek;
+  if (task.scopeType === 'from') return wk >= task.scopeWeek;
+  return true;
+}
+
 function getTaskTimeForDay(task, dayIndex) {
   if (task.timeMode === 'sameTime') return task.time || '';
   if (task.timeMode === 'perDay') return (task.times && task.times[dayIndex]) || '';
@@ -1504,9 +1555,12 @@ function renderGrid() {
   const today = new Date(); today.setHours(0,0,0,0);
   const wk = weekKey(currentSunday);
 
+  // Only show tasks that are in scope for this week
+  const visibleTasks = tasks.filter(t => isTaskInScope(t, wk));
+
   const taskNamesEl = document.getElementById('task-names');
   taskNamesEl.innerHTML = '';
-  tasks.forEach((task, idx) => {
+  visibleTasks.forEach((task, idx) => {
     const div = document.createElement('div');
     div.className = 'task-name-cell';
     div.dataset.idx = idx;
@@ -1589,7 +1643,7 @@ function renderGrid() {
     const dayHeaderEl = col.querySelector('.day-header-cell');
     attachDayHeaderLongPress(dayHeaderEl, di, wk);
 
-    tasks.forEach(task => {
+    visibleTasks.forEach(task => {
       const active = isTaskActiveOnDay(task, di);
       const key = checkKey(task.id, di, wk);
       const hasNote = !!notes[key];
@@ -1678,7 +1732,7 @@ function renderProgress() {
   const wk = weekKey(currentSunday);
   const days = getWeekDays(currentSunday);
   let total = 0, done = 0, creditSum = 0;
-  tasks.forEach(task => {
+  tasks.filter(t => isTaskInScope(t, wk)).forEach(task => {
     const hasSubs = (task.subtasks || []).length > 0;
     days.forEach((_, di) => {
       if (isTaskActiveOnDay(task, di)) {
@@ -2230,6 +2284,8 @@ function openAddModal() {
   document.getElementById('task-name-input').value = '';
   document.getElementById('task-time-input').value = '';
   document.getElementById('modal-title').textContent = 'משימה חדשה';
+  document.getElementById('scope-group').style.display = 'block';
+  document.querySelector('input[name="task-scope"][value="all"]').checked = true;
   document.getElementById('modal-actions').innerHTML = `
     <button class="btn-save" id="btn-save">שמור</button>
     <button class="btn-cancel" id="btn-cancel">ביטול</button>
@@ -2249,12 +2305,15 @@ function openEditModal(task) {
   modalTimeMode = task.timeMode || 'allday';
   modalPerDayTimes = task.times ? { ...task.times } : {};
   modalSubtasks = task.subtasks ? task.subtasks.map(s => ({ ...s })) : [];
-  modalReminder = task.reminder
-    ? { enabled: !!task.reminder.enabled, days: [...(task.reminder.days || modalDays)], leadMinutes: task.reminder.leadMinutes || 0 }
-    : { enabled: false, days: [...modalDays], leadMinutes: 0 };
   document.getElementById('task-name-input').value = task.name;
   document.getElementById('task-time-input').value = task.time || '';
   document.getElementById('modal-title').textContent = 'עריכת משימה';
+
+  // Show scope selector and set current value
+  document.getElementById('scope-group').style.display = 'block';
+  const currentScope = task.scopeType || 'all';
+  document.querySelector(`input[name="task-scope"][value="${currentScope}"]`).checked = true;
+
   document.getElementById('modal-actions').innerHTML = `
     <button class="btn-save" id="btn-save">שמור</button>
     <button class="btn-delete" id="btn-delete">מחק</button>
@@ -2264,7 +2323,7 @@ function openEditModal(task) {
   document.getElementById('modal-overlay').classList.add('open');
   document.getElementById('btn-save').addEventListener('click', saveTask);
   document.getElementById('btn-cancel').addEventListener('click', closeModal);
-  document.getElementById('btn-delete').addEventListener('click', deleteTask);
+  document.getElementById('btn-delete').addEventListener('click', openDeleteScopeModal);
 }
 
 function renderPerDayTimes() {
@@ -2354,6 +2413,9 @@ function saveTask() {
     .filter(s => s.name.trim())
     .map(s => ({ id: s.id, name: s.name.trim() }));
 
+  const scopeType = document.querySelector('input[name="task-scope"]:checked')?.value || 'all';
+  const scopeWeek = (scopeType !== 'all') ? weekKey(currentSunday) : null;
+
   const taskData = {
     name,
     freq: 'custom',
@@ -2365,6 +2427,8 @@ function saveTask() {
       ? Object.fromEntries(activeDays.filter(d => modalPerDayTimes[d]).map(d => [d, modalPerDayTimes[d]]))
       : {},
     subtasks: validSubtasks,
+    scopeType,
+    scopeWeek
   };
 
   if (editingTaskId) {
@@ -2381,14 +2445,55 @@ function saveTask() {
   showToast(editingTaskId ? 'המשימה עודכנה' : 'המשימה נוספה ✓');
 }
 
-function deleteTask() {
-  if (!editingTaskId) return;
-  tasks = tasks.filter(t => t.id !== editingTaskId);
-  save();
+function openDeleteScopeModal() {
   closeModal();
-  render();
-  showToast('המשימה נמחקה');
+  document.getElementById('delete-scope-overlay').classList.add('open');
 }
+
+function closeDeleteScopeModal() {
+  document.getElementById('delete-scope-overlay').classList.remove('open');
+}
+
+// Delete only from current week (hide by setting scopeType to exclude this week)
+document.getElementById('delete-week-btn').addEventListener('click', () => {
+  if (!editingTaskId) return;
+  closeDeleteScopeModal();
+  const wk = weekKey(currentSunday);
+  const idx = tasks.findIndex(t => t.id === editingTaskId);
+  if (idx < 0) return;
+  const task = tasks[idx];
+  // Mark as excluded from this specific week using a blocklist
+  if (!task.excludedWeeks) task.excludedWeeks = [];
+  if (!task.excludedWeeks.includes(wk)) task.excludedWeeks.push(wk);
+  save(); render();
+  showToast('המשימה הוסרה מהשבוע הנוכחי');
+});
+
+// Delete from current week onwards
+document.getElementById('delete-from-btn').addEventListener('click', () => {
+  if (!editingTaskId) return;
+  closeDeleteScopeModal();
+  const wk = weekKey(currentSunday);
+  const idx = tasks.findIndex(t => t.id === editingTaskId);
+  if (idx < 0) return;
+  tasks[idx].endWeek = wk; // task is hidden from this week onwards
+  save(); render();
+  showToast('המשימה הוסרה מהשבוע הנוכחי ואילך');
+});
+
+// Delete completely
+document.getElementById('delete-all-btn').addEventListener('click', () => {
+  if (!editingTaskId) return;
+  closeDeleteScopeModal();
+  tasks = tasks.filter(t => t.id !== editingTaskId);
+  save(); render();
+  showToast('המשימה נמחקה לגמרי');
+});
+
+document.getElementById('delete-scope-cancel').addEventListener('click', closeDeleteScopeModal);
+document.getElementById('delete-scope-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('delete-scope-overlay')) closeDeleteScopeModal();
+});
 
 // ═══════════════════════════════════════════════════════
 // TOAST
@@ -2488,7 +2593,7 @@ function buildWeekSummaryText() {
   const noteLines = [];
   const partialSubtaskLines = [];
 
-  tasks.forEach(task => {
+  tasks.filter(t => isTaskInScope(t, wk)).forEach(task => {
     const hasSubs = (task.subtasks || []).length > 0;
     const dayMarks = [];
     let activeCount = 0;
