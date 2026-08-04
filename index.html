@@ -457,6 +457,7 @@
   .check-cell.failed { background: var(--failed-bg); }
   .check-cell.late { background: #f0e6f8; }
   [data-theme="dark"] .check-cell.late { background: #2a1535; }
+  .check-cell.skip { background: var(--bg2); }
 
   .check-mark {
     width: 28px;
@@ -476,7 +477,8 @@
   .check-cell.partial .check-mark { background: var(--partial); border-color: var(--partial); color: white; transform: scale(1.05); }
   .check-cell.failed .check-mark { background: var(--failed); border-color: var(--failed); color: white; transform: scale(1.05); }
   .check-cell.late .check-mark { background: #7b3f8c; border-color: #7b3f8c; color: white; transform: scale(1.05); }
-  /* Horizontal strikethrough line on the ✓ symbol to indicate "completed but late" */
+  .check-cell.skip .check-mark { background: #999; border-color: #999; color: transparent; }
+  /* Horizontal line on 'late' (strikethrough ✓) */
   .check-cell.late .check-mark::after {
     content: '';
     position: absolute;
@@ -485,6 +487,17 @@
     height: 2px;
     background: rgba(255,255,255,0.82);
     border-radius: 1px;
+    pointer-events: none;
+  }
+  /* Horizontal line on 'skip' (gray dash = not relevant) */
+  .check-cell.skip .check-mark::after {
+    content: '';
+    position: absolute;
+    left: 5px; right: 5px;
+    top: 48%;
+    height: 2.5px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 2px;
     pointer-events: none;
   }
 
@@ -514,6 +527,7 @@
   .subtask-dot.done   { background: var(--check); }
   .subtask-dot.failed { background: var(--failed); }
   .subtask-dot.late   { background: #7b3f8c; }
+  .subtask-dot.skip   { background: #aaa; }
 
   /* ─ SUBTASK PANEL (floating modal, same style as note modal) ─ */
   #subtask-overlay { align-items: flex-start; justify-content: center; }
@@ -571,6 +585,17 @@
     height: 2px;
     background: rgba(255,255,255,0.82);
     border-radius: 1px;
+    pointer-events: none;
+  }
+  .subtask-btn.skip   { background: #999; border-color: #999; color: transparent; position: relative; }
+  .subtask-btn.skip::after {
+    content: '';
+    position: absolute;
+    left: 7px; right: 7px;
+    top: 48%;
+    height: 2.5px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 2px;
     pointer-events: none;
   }
 
@@ -904,6 +929,7 @@
   .history-check-dot.partial { background: var(--partial); }
   .history-check-dot.failed { background: var(--failed); }
   .history-check-dot.late { background: #7b3f8c; }
+  .history-check-dot.skip { background: var(--border); opacity: 0.5; }
 
   /* ───── EMPTY STATE ───── */
   .empty-state { text-align: center; padding: 48px 24px; color: var(--text3); }
@@ -1468,9 +1494,9 @@ function weekKey(sunday) {
 // TASK STATUS (three states: done / partial / failed)
 // ═══════════════════════════════════════════════════════
 
-const STATUS_CYCLE = ['none', 'done', 'partial', 'failed', 'late'];
-const STATUS_SYMBOL = { none: '', done: '✓', partial: '◐', failed: '−', late: '✓' };
-const STATUS_CLASS  = { none: '', done: 'checked', partial: 'partial', failed: 'failed', late: 'late' };
+const STATUS_CYCLE = ['none', 'done', 'partial', 'failed', 'late', 'skip'];
+const STATUS_SYMBOL = { none: '', done: '✓', partial: '◐', failed: '−', late: '✓', skip: '−' };
+const STATUS_CLASS  = { none: '', done: 'checked', partial: 'partial', failed: 'failed', late: 'late', skip: 'skip' };
 
 function getStatus(key, source) {
   const data = source || checks;
@@ -1672,7 +1698,7 @@ function renderGrid() {
         const dotItems = subs.map(s => {
           const sk = subtaskKey(task.id, di, wk, s.id);
           const ss = checks[sk] || 'none';
-          return `<div class="subtask-dot ${ss === 'done' ? 'done' : ss === 'failed' ? 'failed' : ss === 'late' ? 'late' : ''}"></div>`;
+          return `<div class="subtask-dot ${ss === 'done' ? 'done' : ss === 'failed' ? 'failed' : ss === 'late' ? 'late' : ss === 'skip' ? 'skip' : ''}"></div>`;
         }).join('');
         dotsHtml = `<div class="subtask-dots">${dotItems}</div>`;
       }
@@ -1706,25 +1732,28 @@ function renderGrid() {
 function computeSubtaskStatus(task, dayIndex, wk) {
   const subs = task.subtasks || [];
   if (!subs.length) return getStatus(checkKey(task.id, dayIndex, wk));
-  let doneCount = 0, lateCount = 0, failedCount = 0;
+  let doneCount = 0, lateCount = 0, failedCount = 0, skipCount = 0;
   subs.forEach(s => {
     const sk = subtaskKey(task.id, dayIndex, wk, s.id);
     const ss = checks[sk] || 'none';
     if (ss === 'done') doneCount++;
     else if (ss === 'late') lateCount++;
     else if (ss === 'failed') failedCount++;
+    else if (ss === 'skip') skipCount++;
   });
   const total = subs.length;
-  const completedCount = doneCount + lateCount;
-  const noneCount = total - doneCount - lateCount - failedCount;
+  const noneCount = total - doneCount - lateCount - failedCount - skipCount;
 
-  if (completedCount === total) {
-    // All completed — if any were late, mark the cell as late
-    return lateCount > 0 ? 'late' : 'done';
-  }
-  if (failedCount === total) return 'failed';
-  if (noneCount === total) return 'none';
-  // Mixed (some done/late, some failed, or some still none)
+  // All skipped → skip (not counted)
+  if (skipCount === total) return 'skip';
+
+  // Work only with non-skip subtasks
+  const completedCount = doneCount + lateCount;
+  const activeTotal = total - skipCount;
+
+  if (completedCount === activeTotal) return lateCount > 0 ? 'late' : 'done';
+  if (failedCount === activeTotal) return 'failed';
+  if (noneCount === activeTotal) return 'none';
   return 'partial';
 }
 
@@ -1736,10 +1765,11 @@ function renderProgress() {
     const hasSubs = (task.subtasks || []).length > 0;
     days.forEach((_, di) => {
       if (isTaskActiveOnDay(task, di)) {
-        total++;
         const status = hasSubs
           ? computeSubtaskStatus(task, di, wk)
           : getStatus(checkKey(task.id, di, wk));
+        if (status === 'skip') return; // not counted
+        total++;
         if (status === 'done' || status === 'late') { done++; creditSum += 1; }
         else if (status === 'partial') { creditSum += 0.5; }
       }
@@ -1757,7 +1787,7 @@ function refreshCellFromSubtasks(task, dayIndex, wk) {
   const status = computeSubtaskStatus(task, dayIndex, wk);
   const cell = document.querySelector(`.check-cell[data-task="${task.id}"][data-day="${dayIndex}"]`);
   if (!cell) return;
-  cell.classList.remove('checked', 'partial', 'failed', 'late');
+  cell.classList.remove('checked', 'partial', 'failed', 'late', 'skip');
   if (STATUS_CLASS[status]) cell.classList.add(STATUS_CLASS[status]);
   cell.querySelector('.check-mark').textContent = STATUS_SYMBOL[status];
   // Update subtask dots
@@ -1767,7 +1797,7 @@ function refreshCellFromSubtasks(task, dayIndex, wk) {
       const s = (task.subtasks || [])[i];
       if (!s) return;
       const ss = checks[subtaskKey(task.id, dayIndex, wk, s.id)] || 'none';
-      dot.className = 'subtask-dot' + (ss === 'done' ? ' done' : ss === 'failed' ? ' failed' : ss === 'late' ? ' late' : '');
+      dot.className = 'subtask-dot' + (ss === 'done' ? ' done' : ss === 'failed' ? ' failed' : ss === 'late' ? ' late' : ss === 'skip' ? ' skip' : '');
     });
   }
   renderProgress();
@@ -1788,13 +1818,13 @@ function cycleCheck(taskId, dayIndex, wk) {
 
   const cell = document.querySelector(`.check-cell[data-task="${taskId}"][data-day="${dayIndex}"]`);
   if (cell) {
-    cell.classList.remove('checked', 'partial', 'failed', 'late');
+    cell.classList.remove('checked', 'partial', 'failed', 'late', 'skip');
     if (STATUS_CLASS[next]) cell.classList.add(STATUS_CLASS[next]);
     cell.querySelector('.check-mark').textContent = STATUS_SYMBOL[next];
   }
 
   renderProgress();
-  const toastMsg = { none: 'בוטל', done: '✓ בוצע!', partial: '◐ בוצע חלקית', failed: '− לא בוצע', late: '✓ הושלם' }[next];
+  const toastMsg = { none: 'בוטל', done: '✓ בוצע!', partial: '◐ בוצע חלקית', failed: '− לא בוצע', late: '✓ הושלם', skip: '⊘ לא רלוונטי' }[next];
   showToast(toastMsg);
 }
 
@@ -1832,8 +1862,8 @@ function renderSubtaskPanel() {
     `;
     row.querySelector('.subtask-btn').addEventListener('click', () => {
       const cur = checks[sk] || 'none';
-      // cycle: none → done → failed → late → none
-      const nxt = cur === 'none' ? 'done' : cur === 'done' ? 'failed' : cur === 'failed' ? 'late' : 'none';
+      // cycle: none → done → failed → late → skip → none
+      const nxt = cur === 'none' ? 'done' : cur === 'done' ? 'failed' : cur === 'failed' ? 'late' : cur === 'late' ? 'skip' : 'none';
       if (nxt === 'none') delete checks[sk];
       else checks[sk] = nxt;
       save();
@@ -2587,7 +2617,7 @@ document.getElementById('zoom-out').addEventListener('click', () => {
 // WHATSAPP SHARE
 // ═══════════════════════════════════════════════════════
 
-const STATUS_EMOJI = { done: '✅', partial: '🟡', failed: '🔴', late: '🟣', none: '⚪' };
+const STATUS_EMOJI = { done: '✅', partial: '🟡', failed: '🔴', late: '🟣', none: '⚪', skip: '⬛' };
 
 function buildWeekSummaryText() {
   const wk = weekKey(currentSunday);
@@ -2610,9 +2640,10 @@ function buildWeekSummaryText() {
     for (let di = 0; di < 7; di++) {
       if (!isTaskActiveOnDay(task, di)) { dayMarks.push('⬛'); continue; }
       activeCount++;
-      total++;
       const key = checkKey(task.id, di, wk);
       const status = hasSubs ? computeSubtaskStatus(task, di, wk) : getStatus(key);
+      if (status === 'skip') { dayMarks.push('⬛'); continue; } // skip = not counted, shown as inactive
+      total++;
       if (status === 'done' || status === 'late') creditSum += 1;
       else if (status === 'partial') creditSum += 0.5;
       dayMarks.push(STATUS_EMOJI[status]);
