@@ -1590,6 +1590,7 @@ function renderGrid() {
     const div = document.createElement('div');
     div.className = 'task-name-cell';
     div.dataset.idx = idx;
+    div.dataset.taskid = task.id; // store actual task ID for drag reorder
     const badge = getTaskTimeBadgeText(task);
     const taskNoteKey = `task-note-${task.id}`;
     const hasTaskNote = !!notes[taskNoteKey];
@@ -2157,10 +2158,17 @@ function startDrag(rowEl, idx, startY) {
     rowEl.classList.remove('dragging');
 
     if (fromIdx !== toIdx) {
-      const moved = tasks.splice(fromIdx, 1)[0];
-      tasks.splice(toIdx, 0, moved);
-      save();
-      render();
+      // Use task IDs to find actual positions in the full tasks array
+      const fromId = parseInt(rows[fromIdx]?.dataset.taskid);
+      const toId   = parseInt(rows[toIdx]?.dataset.taskid);
+      const fromRealIdx = tasks.findIndex(t => t.id === fromId);
+      const toRealIdx   = tasks.findIndex(t => t.id === toId);
+      if (fromRealIdx >= 0 && toRealIdx >= 0) {
+        const moved = tasks.splice(fromRealIdx, 1)[0];
+        tasks.splice(toRealIdx, 0, moved);
+        save();
+        render();
+      }
     }
 
     dragState = null;
